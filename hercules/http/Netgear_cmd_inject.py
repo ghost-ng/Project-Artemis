@@ -28,7 +28,12 @@ def GetInput():
     avail_cmds = ("set","target",["interval","retry","shodan_list","target_file"],"shodan",["query","username","password"],"load",["module"])
     feedback = input("ci-sploit>>")
 
+avail_cmds = [1,[1,2,3],2,3]
 
+def iterate(li,cmds,iterator = __init__.li):
+        if
+li = input(>>>)
+iterate(li)
 
 
 
