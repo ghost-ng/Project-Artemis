@@ -441,6 +441,8 @@ A python implementation of netcat
                                  'verbocity lvls = debug --> no options --> quiet')
         args = parser.parse_args()
 
+#TODO - Add a key pairing feature in the tcp traffic
+
         try:
             len(args.listening_addr)
             listenflg = True
