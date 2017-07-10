@@ -54,9 +54,11 @@ def assign_args():
                 '''.format(sys.argv[0]))
 
         parser.add_argument('--hostfile', action='store', dest='tgt_file',type=str, required=True, help='List of IPs')
-        parser.add_argument('-u','--username', action='store', dest='username', type=str, required=True,
+        parser.add_argument('--user', action='store', dest='username', type=str, required=True,
                             help='Username to log in as',default="admin")
-        parser.add_argument('-p','--password', action='store', dest='password', type=str, required=True,
+        parser.add_argument('--pass', action='store', dest='password', type=str, required=True,
+                            help='Password to log in with', default="password")
+        parser.add_argument('-p', '--port',action='store', dest='port', type=str, required=True,
                             help='Password to log in with', default="password")
         parser.add_argument('--cmd',action='store', dest='cmd', type=str, required=True,
                             help='Command to Test Injection', default="ls")
@@ -68,7 +70,7 @@ def main(args):
     try:
         with open(args.tgt_file) as file:
             for host in file:
-                fuzz(args.cmd, args.tgt_file, args.username, args.password)
+                fuzz(args.cmd, host + ":" + args.port, args.username, args.password)
     except FileNotFoundError:
         print("[!] File does not exist")
         sys.exit()
