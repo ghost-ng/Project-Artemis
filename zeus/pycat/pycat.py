@@ -380,8 +380,21 @@ def assign_args():
     global flags
 
     if not len(sys.argv[1:]):
-        print("[*] Did not detect any options")
-        print("[*] Try [script] -h or --help to view the help menu")
+        art="""
+    ______      _____       _   
+    | ___ \    /  __ \     | |  
+    | |_/ /   _| /  \/ __ _| |_ 
+    |  __/ | | | |    / _` | __|
+    | |  | |_| | \__/\ (_| | |_ 
+    \_|   \__, |\____/\__,_|\__|
+           __/ |                
+          |___/                 
+      
+A python implementation of netcat      
+    v2.0 by MidnightSeer
+"""
+        print(art)
+        print("Help: -h or --help to view the help menu")
         sys.exit(0)
     else:
 
