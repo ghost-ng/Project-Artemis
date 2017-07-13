@@ -6,9 +6,36 @@ import subprocess
 import sys
 import threading
 from time import sleep
-
+import hashlib
 global flags, bit
 
+BANNER_ART =         art="""
+    ______      _____       _   
+    | ___ \    /  __ \     | |  
+    | |_/ /   _| /  \/ __ _| |_ 
+    |  __/ | | | |    / _` | __|
+    | |  | |_| | \__/\ (_| | |_ 
+    \_|   \__, |\____/\__,_|\__|
+           __/ |                
+          |___/                 
+
+              |\      _,,,,--,,_
+              /,`.-'`'    -,  \-;,
+             |,4-  ) ),,__ ,\ (  ;;        
+            '---''(.'--'  `-'`.)`'  v1.3
+            
+A python implementation of netcat      
+    
+    
+-h or --help to view the help menu
+"""
+
+PASSWORD_CLEAR = "password"
+PASSWORD_OBSCURED = hashlib.sha3_256(PASSWORD_CLEAR.encode()).hexdigest()
+FIRST_MSG = True
+
+
+print(PASSWORD_OBSCURED)
 
 class Client(threading.Thread):
     global flags, bit
@@ -152,6 +179,7 @@ class ClientServer(threading.Thread):
         self.data = ''
 
     def run(self):
+        global FIRST_MSG
         upload = False
         while True:
 
@@ -159,8 +187,13 @@ class ClientServer(threading.Thread):
                 if flags['d']:
                     print("[*] Listening for incoming data...")
                 while not self.data.endswith('\n'):
+                    #self.authenticate()
                     try:
                         self.data = self.data + self.conn.recv(1024).decode()
+                        if FIRST_MSG:
+                            self.authenticate()
+
+
                     except OSError:
                         if flags['d']:
                             print("[!] Error:", sys.exc_info())
@@ -179,12 +212,13 @@ class ClientServer(threading.Thread):
                 break
 
             if self.data.endswith('\n'):
+
                 if flags['d']:
                     print("[*] Found eol")
                 if self.data.startswith('quit'):  # graceful quit
                     if flags['d']:
                         print("[*] Found Termination String!")
-                        print("[*] Session terminated --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
+                        print("[-] Session terminated --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
                     self.data = ''
                     self.addr = None
                     self.close()
@@ -218,6 +252,17 @@ class ClientServer(threading.Thread):
                     self.data = ''
             else:
                 pass
+
+    def authenticate(self):
+        global FIRST_MSG
+        if PASSWORD_OBSCURED in self.data:
+            self.send_msg(BANNER_ART)
+            print("[+] Authenticated! --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
+            FIRST_MSG=False
+            self.data = ""
+        elif flags['l']:
+            print("[-] Authentication Failed --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
+            self.conn.close()
 
     def downloadfile(self, filename):
         # print("Filename -", filename)
@@ -320,7 +365,7 @@ class ConnectionThread(threading.Thread):
             self.port = port
         except socket.error:
             if not flags['q']:
-                print("[!] Failed to create a socket")
+                print("[!] Failed to create a socket.  Check port bindings!")
             if flags['d']:
                 print("[!] Error:", sys.exc_info())
             sys.exit()
@@ -340,8 +385,11 @@ class ConnectionThread(threading.Thread):
             c.start()
             if flags['d']:
                 print("[*] Client Connected --> {h}:{p}".format(h=address[0], p=address[1]))
+
             self.clients.append((c, session))
             self.update()
+
+
 
     def send_msg(self, msg, session):
         try:
@@ -354,7 +402,7 @@ class ConnectionThread(threading.Thread):
             except:
                 if flags['d'] and not flags['q']:
                     print("[!] Error:", sys.exc_info())
-                sys.exit()
+                sys.exit(0)
 
     def terminate_all(self):
         for c in self.clients:
@@ -380,21 +428,9 @@ def assign_args():
     global flags
 
     if not len(sys.argv[1:]):
-        art="""
-    ______      _____       _   
-    | ___ \    /  __ \     | |  
-    | |_/ /   _| /  \/ __ _| |_ 
-    |  __/ | | | |    / _` | __|
-    | |  | |_| | \__/\ (_| | |_ 
-    \_|   \__, |\____/\__,_|\__|
-           __/ |                
-          |___/                 
-      
-A python implementation of netcat      
-    v2.0 by MidnightSeer
-"""
-        print(art)
-        print("Help: -h or --help to view the help menu")
+
+        print(BANNER_ART)
+
         sys.exit(0)
     else:
 
@@ -441,7 +477,6 @@ A python implementation of netcat
                                  'verbocity lvls = debug --> no options --> quiet')
         args = parser.parse_args()
 
-#TODO - Add a key pairing feature in the tcp traffic
 
         try:
             len(args.listening_addr)

@@ -9,6 +9,9 @@ import shodan
 sys.path.append("../../misc/")
 import ColorPrint
 
+DEBUG = False
+
+
 def search_shodan(SHODAN_API_KEY,query):
     api = shodan.Shodan(SHODAN_API_KEY)
     # Search Shodan
@@ -31,6 +34,8 @@ def search_shodan(SHODAN_API_KEY,query):
         raise KeyboardInterrupt
 
 def fuzz(cmd,login,password,filename,auto_flag):
+    global DEBUG
+
     creds = False
     file = open(filename, "r")
     cred_file = open(filename+"_harvested_creds.txt", "w+")
@@ -72,10 +77,14 @@ def fuzz(cmd,login,password,filename,auto_flag):
         except socket.timeout:
             ColorPrint.PrintColor(ColorPrint.WARN, "Unable to connect", host, 11)
             pass
-        except requests.Timeout:
+        except (requests.Timeout,requests.ConnectionError,requests.ConnectTimeout):
             ColorPrint.PrintColor(ColorPrint.WARN, "Unable to connect", host, 11)
             pass
-        except:
+        except Exception as e:
+            if DEBUG:
+                ColorPrint.PrintColor(ColorPrint.WARN, "An Unknown Error Occurred",
+                                      'Error on line {ln} {te} {ex}'.format(ln=sys.exc_info()[-1].tb_lineno, te=type(e),
+                                                                            ex=e),11)
             pass
     file.close()
     cred_file.close()
@@ -141,6 +150,9 @@ def assign_args():
                             help='Command to Test Injection', default="echo test")
         parser.add_argument('--auto', action='store_true', dest='auto_flag',
                             help='Automate the script.  By default, the script will pause every 10 tries', default=False)
+        parser.add_argument('-d', '--debug',action='store_true', dest='debug_flag',
+                            help='Display debug options',default=False)
+
         #TODO ADD OPTION TO CUSTOMIZE THE TEST
 
 
@@ -148,6 +160,12 @@ def assign_args():
         return parser.parse_args()
 
 def main(args):
+    global DEBUG
+    if args.debug_flag:
+        DEBUG = True
+    else:
+        DEBUG = False
+
     if args.api_key and args.query:         #Search shodan for devices
         try:
             filename = search_shodan(args.api_key,args.query)
