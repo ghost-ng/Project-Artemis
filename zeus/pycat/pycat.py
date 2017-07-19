@@ -9,7 +9,7 @@ from time import sleep
 import hashlib
 global flags, bit
 
-BANNER_ART =         art="""
+BANNER_ART ="""
     ______      _____       _   
     | ___ \    /  __ \     | |  
     | |_/ /   _| /  \/ __ _| |_ 
@@ -29,13 +29,181 @@ A python implementation of netcat
     
 -h or --help to view the help menu
 """
+PASSWORD_OBSCURED = ''
+# PASSWORD_CLEAR = "password"
+# PASSWORD_OBSCURED = hashlib.sha3_256(PASSWORD_CLEAR.encode()).hexdigest()
+# FIRST_MSG = True
+#
+#
+# print(PASSWORD_OBSCURED)
 
-PASSWORD_CLEAR = "password"
-PASSWORD_OBSCURED = hashlib.sha3_256(PASSWORD_CLEAR.encode()).hexdigest()
 FIRST_MSG = True
 
 
-print(PASSWORD_OBSCURED)
+def assign_args():
+    global flags
+
+    if not len(sys.argv[1:]):
+
+        print(BANNER_ART)
+
+        sys.exit(0)
+    else:
+
+        parser = argparse.ArgumentParser(description="Peer to Peer chat client",
+                                         formatter_class=argparse.RawDescriptionHelpFormatter,
+                                         epilog='''Examples:
+                Server:   script.py -l 0.0.0.0 -p 9999
+                          script.py -l localhost -p 4444 -k [shell]
+                Client:   script.py -r 10.0.1.5 -p 4444 -e '/tmp/backdoor.sh'
+                          script.py -r 79.86.48.22 -p 4444
+
+                Note:     This is not a TTY terminal and interactive commands like sudo
+                          and vi will not work''')
+        group = parser.add_mutually_exclusive_group()
+        parser.add_argument('-l', '--listen', action='store', dest='listening_addr', const="0.0.0.0",
+                            nargs="?", help='Local address to listen on', metavar="[Listening Address]")
+        parser.add_argument('-p', '--port', action='store', dest='port', type=int, required=True,
+                            metavar="[Target Port]",
+                            help='Local port to bind to')
+        group.add_argument('-r', '--remote-host', action='store', dest='remote_host', metavar="[Remote Host]",
+                            help='Remote IP to connect to')
+        group.add_argument('-s', '--shell', action='store_true', dest='shellflg',
+                            help='Spawn a shell')
+        parser.add_argument('--shell-keyword', action='store', dest='shell_keyword', metavar="[Keyword]",
+                            default='exec]',
+                            help='The keyword at the beginning of a command to instruct the server to process the'
+                                 'following string as a command.  Default is "[exec]"   '
+                                 'Example: [exec] ls -al  --> "[exec]" becomes the parameter for this argument and'
+                                 'instructs the server to interpret the subsequent strings as shell commands.'
+                                 'Note: This is a server side argument')
+        parser.add_argument('-e', '--execute', action='store', dest='execute', metavar="[Command to Execute]",
+                            help="execute a command; stdout/err is not received on client from any spawned processes")
+        parser.add_argument('-u', '--upload', action='store', dest='upload', metavar="[Upload Destination]",
+                            help='upload a file; combined with -e it will upload and execute the file')
+        parser.add_argument('--upload-keyword', action='store', dest='upload_keyword', metavar="[Keyword]",
+                            default='[upload]',
+                            help='Change the keyword to instruct the server to upload a file.  Default: "[upload]"')
+        parser.add_argument('--run', action='store_true', dest='run',
+                            help='Will tell the server side script to execute the uploaded file')
+        parser.add_argument('-d', '--debug', action='store_true', dest='debugflg',
+                            help='Turn on verbose feedback')
+        parser.add_argument('-q', '--quiet', action='store_true', dest='quietflg',
+                            help='Supress all error messages; should not be used with -d;'
+                                 'verbocity lvls = debug --> no options --> quiet')
+        parser.add_argument('-a', '--auth', action='store_true', dest='auth',
+                            help='If a client, prompt for the password to authenticate with the server.'
+                                 'If a server, prompt for a password to authenticate clients.')
+        args = parser.parse_args()
+
+
+        try:
+            len(args.listening_addr)
+            listenflg = True
+        except:
+            listenflg = False
+        if args.debugflg:
+            debugflg = True
+        else:
+            debugflg = False
+        if args.quietflg:
+            quietflg = True
+        else:
+            debugflg = False
+        if args.auth:
+            GetPasswd(listenflg)
+        if args.execute is not None:
+            execflg = True
+        else:
+            execflg = False
+        try:
+            len(args.upload)
+            uploadflg = True
+            upload = args.upload
+        except:
+            upload = False
+        if args.shellflg:
+            shellflg = True
+        else:
+            shellflg = False
+        try:
+            len(args.exec_cmd)
+            exec_cmd = args.exec_cmd
+        except:
+            exec_cmdflg = False
+
+        flags = {"l": listenflg, "p": args.port, "r": args.remote_host, "u": upload,
+                 "upload-keyword": args.upload_keyword, "s": args.shellflg,
+                 "e": args.execute, "shell-keyword": args.shell_keyword, "run": args.run, "q": args.quietflg,
+                 "d": args.debugflg,"auth":args.auth}
+
+        return args
+
+def GetPasswd(listener):
+    global FIRST_MSG
+    global PASSWORD_OBSCURED
+    if listener:
+        print("[?] Password For Client Authentication:")
+    PASSWORD_CLEAR = input(">> ")
+    PASSWORD_OBSCURED = hashlib.sha3_256(PASSWORD_CLEAR.encode()).hexdigest()
+
+    FIRST_MSG = True
+
+    print("[*] Key:",PASSWORD_OBSCURED)
+
+
+def main(args):
+    version = sys.version_info[0]
+
+    if flags['l'] and not flags['r']:  # Run the server
+        run_server = ConnectionThread(args.listening_addr, args.port)
+        run_server.start()
+        while True:
+            try:
+                run_server.update()
+                if int(version) > 2:
+                    response = input("")
+                else:
+                    response = raw_input("")
+            except KeyboardInterrupt:
+                if not flags['q']:
+                    print("[!] Keyboard Interrupt Detected")
+                run_server.terminate_all()
+                sys.exit()
+            except (ConnectionError, ConnectionAbortedError):
+                if not flags['q']:
+                    print("[*] Connection Dropped...")
+                if not flags['q'] or flags['d']:
+                    print("[*] Error:", sys.exc_info())
+                sys.exit()
+            for c in run_server.clients:
+                c[0].send_msg(response + "\n")
+
+    elif flags['r'] and not flags['l']:  # Run the client
+        client = Client(args.remote_host, args.port)
+        client.start()
+        while not flags['e'] and not flags['u']:
+            try:
+                if int(version) > 2:
+                    msg = input("pycat >> ")
+                else:
+                    msg = raw_input("pycat >> ")
+                client.send_msg(msg)
+                sleep(.5)
+            except KeyboardInterrupt:
+                client.tcp_client.close()
+                print("\n[*] Keyboard Interrupt Detected!  Quitting...")
+                break
+            except:
+                break
+        sys.exit()
+
+    else:  # Handle not -r or -l
+        print("[!] You must use either the -r or -l flag and not both together")
+
+
+
+
 
 class Client(threading.Thread):
     global flags, bit
@@ -69,7 +237,7 @@ class Client(threading.Thread):
             c.start()
             ############################################################################
             # This Function defines the process of sending a file to the target
-            # - The file is sent in bytes form
+            # - The file is sent in bytes
             # - The file is appended with an EOF string
             ############################################################################
 
@@ -132,6 +300,7 @@ class Client(threading.Thread):
         except (ConnectionResetError, BrokenPipeError):
             if not flags['q']:
                 print("[!] Server Terminated Session...")
+                raise BrokenPipeError
             if flags['d'] and not flags['q']:
                 print("[!] Error:", sys.exc_info())
             sys.exit()
@@ -146,7 +315,7 @@ class Client(threading.Thread):
         data = ""
         while True:
             if flags['d']:
-                print("[*] Ready to Receive Data...")
+                print("[*] Waiting to Receive Data...")
             try:
                 if flags['d']:
                     print("[*] Receiving...")
@@ -180,6 +349,12 @@ class ClientServer(threading.Thread):
 
     def run(self):
         global FIRST_MSG
+
+        # If this is the new connection on the server, then reset the FIRST_MSG to true
+        if flags['l']:
+            FIRST_MSG = True
+        else:
+            pass
         upload = False
         while True:
 
@@ -190,14 +365,23 @@ class ClientServer(threading.Thread):
                     #self.authenticate()
                     try:
                         self.data = self.data + self.conn.recv(1024).decode()
-                        if FIRST_MSG:
-                            self.authenticate()
-
+                        if FIRST_MSG == True and flags['auth'] and flags['l']:
+                            if flags['d']:
+                                print("Global Vars:")
+                                print(globals())
+                                print("Local Vars:")
+                                print(locals())
+                                self.authenticate()
 
                     except OSError:
                         if flags['d']:
                             print("[!] Error:", sys.exc_info())
+                            print("Global Vars:")
+                            print(globals())
+                            print("Local Vars:")
+                            print(locals())
                         sys.exit()
+                print(fixmsgformat(self.data))
 
 
             except UnicodeDecodeError:
@@ -205,6 +389,10 @@ class ClientServer(threading.Thread):
                 if not flags['q']:
                     print("[*] Session Terminated --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
                 self.conn.close()
+                print("Global Vars:")
+                print(globals())
+                print("Local Vars:")
+                print(locals())
                 break
             except (ConnectionResetError, ConnectionRefusedError, ConnectionError):
                 if not flags['q']:
@@ -219,7 +407,7 @@ class ClientServer(threading.Thread):
                     if flags['d']:
                         print("[*] Found Termination String!")
                         print("[-] Session terminated --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
-                    self.data = ''
+
                     self.addr = None
                     self.close()
                     break
@@ -228,14 +416,16 @@ class ClientServer(threading.Thread):
                         # run if encounter the execution keyword
                         cmd = self.data.strip(flags['shell-keyword'])
                         if flags['d']:
-                            print("[*] Received Command:", cmd)
+                            print("[*] Found a shell-keyword:", cmd)
 
                         response = self.run_command(cmd)
                         self.send_msg(response)
+
                     elif flags['s']:
                         # run if used as a shell emulator
                         response = self.run_command(self.data)
                         self.send_msg(response)
+
                     elif self.data.startswith(flags['upload-keyword']):
                         upload = True
                         # run if encouter the upload keyword
@@ -245,9 +435,10 @@ class ClientServer(threading.Thread):
                         fname_str = fname_str.strip(flags['upload-keyword'] + ' ')
                         filename = fname_str.strip("<>")
                         self.downloadfile(filename)  # passes only the filename
+
                     else:  # This is the normal chat client
 
-                        if not upload or flags['d']:
+                        if not upload and not FIRST_MSG:
                             print(fixmsgformat(self.data))
                     self.data = ''
             else:
@@ -255,13 +446,18 @@ class ClientServer(threading.Thread):
 
     def authenticate(self):
         global FIRST_MSG
-        if PASSWORD_OBSCURED in self.data:
+        if PASSWORD_OBSCURED in self.data and flags['l']:
+            if flags['d']:
+                print("[+] Authenticated! --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
             self.send_msg(BANNER_ART)
-            print("[+] Authenticated! --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
-            FIRST_MSG=False
+            if flags['d']:
+                print("[*] Sent Banner")
+
+                FIRST_MSG = False
             self.data = ""
-        elif flags['l']:
-            print("[-] Authentication Failed --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
+        elif PASSWORD_OBSCURED not in self.data and flags['l']:
+            if flags['d']:
+                print("[-] Authentication Failed --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
             self.conn.close()
 
     def downloadfile(self, filename):
@@ -302,8 +498,11 @@ class ClientServer(threading.Thread):
             try:
                 msg = msg + "\n"
                 self.conn.send(msg.encode())
-            except:
-                sys.exit()
+            except Exception as e:
+                if flags['d']:
+                    print(e)
+                print(e)
+                sys.exit(0)
 
     def close(self):
         self.addr = None
@@ -424,146 +623,6 @@ class ConnectionThread(threading.Thread):
                 self.clients.remove(c)
 
 
-def assign_args():
-    global flags
-
-    if not len(sys.argv[1:]):
-
-        print(BANNER_ART)
-
-        sys.exit(0)
-    else:
-
-        parser = argparse.ArgumentParser(description="Peer to Peer chat client",
-                                         formatter_class=argparse.RawDescriptionHelpFormatter,
-                                         epilog='''Examples:
-                Server:   script.py -l 0.0.0.0 -p 9999
-                          script.py -l localhost -p 4444 -k [shell]
-                Client:   script.py -r 10.0.1.5 -p 4444 -e '/tmp/backdoor.sh'
-                          script.py -r 79.86.48.22 -p 4444
-
-                Note:     This is not a TTY terminal and interactive commands like sudo
-                          and vi will not work''')
-
-        parser.add_argument('-l', '--listen', action='store', dest='listening_addr', const="0.0.0.0",
-                            nargs="?", help='Local address to listen on', metavar="[Listening Address]")
-        parser.add_argument('-p', '--port', action='store', dest='port', type=int, required=True,
-                            metavar="[Target Port]",
-                            help='Local port to bind to')
-        parser.add_argument('-r', '--remote-host', action='store', dest='remote_host', metavar="[Remote Host]",
-                            help='Remote IP to connect to')
-        parser.add_argument('-s', '--shell', action='store_true', dest='shellflg',
-                            help='Spawn a shell')
-        parser.add_argument('--shell-keyword', action='store', dest='shell_keyword', metavar="[Keyword]",
-                            default='[exec]',
-                            help='The keyword at the beginning of a command to instruct the server to process the'
-                                 'following string as a command.  Default is "[exec]"   '
-                                 'Example: [exec] ls -al  --> "[exec]" becomes the parameter for this argument and'
-                                 'instructs the server to interpret the subsequent strings as shell commands.'
-                                 'Note: This is a server side argument')
-        parser.add_argument('-e', '--execute', action='store', dest='execute', metavar="[Command to Execute]",
-                            help="execute a command; stdout/err is not received on client from any spawned processes")
-        parser.add_argument('-u', '--upload', action='store', dest='upload', metavar="[Upload Destination]",
-                            help='upload a file; combined with -e it will upload and execute the file')
-        parser.add_argument('--upload-keyword', action='store', dest='upload_keyword', metavar="[Keyword]",
-                            default='[upload]',
-                            help='Change the keyword to instruct the server to upload a file.  Default: "[upload]"')
-        parser.add_argument('--run', action='store_true', dest='run',
-                            help='Will tell the server side script to execute the uploaded file')
-        parser.add_argument('-d', '--debug', action='store_true', dest='debugflg',
-                            help='Turn on verbose feedback')
-        parser.add_argument('-q', '--quiet', action='store_true', dest='quietflg',
-                            help='Supress all error messages; should not be used with -d;'
-                                 'verbocity lvls = debug --> no options --> quiet')
-        args = parser.parse_args()
-
-
-        try:
-            len(args.listening_addr)
-            listenflg = True
-        except:
-            listenflg = False
-        if args.debugflg:
-            debugflg = True
-        else:
-            debugflg = False
-        if args.quietflg:
-            quietflg = True
-        else:
-            debugflg = False
-        if args.execute is not None:
-            execflg = True
-        else:
-            execflg = False
-        try:
-            len(args.upload)
-            uploadflg = True
-            upload = args.upload
-        except:
-            upload = False
-        if args.shellflg:
-            shellflg = True
-        else:
-            shellflg = False
-        try:
-            len(args.exec_cmd)
-            exec_cmd = args.exec_cmd
-        except:
-            exec_cmdflg = False
-
-        flags = {"l": listenflg, "p": args.port, "r": args.remote_host, "u": upload,
-                 "upload-keyword": args.upload_keyword, "s": args.shellflg,
-                 "e": args.execute, "shell-keyword": args.shell_keyword, "run": args.run, "q": args.quietflg,
-                 "d": args.debugflg}
-
-        return args
-
-
-def main(args):
-    version = sys.version_info[0]
-    if flags['l'] and not flags['r']:  # Run the server
-        run_server = ConnectionThread(args.listening_addr, args.port)
-        run_server.start()
-        while True:
-            try:
-                run_server.update()
-                if int(version) > 2:
-                    response = input("")
-                else:
-                    response = raw_input("")
-            except KeyboardInterrupt:
-                if not flags['q']:
-                    print("[!] Keyboard Interrupt Detected")
-                run_server.terminate_all()
-                sys.exit()
-            except (ConnectionError, ConnectionAbortedError):
-                if not flags['q']:
-                    print("[*] Connection Dropped...")
-                if not flags['q'] or flags['d']:
-                    print("[*] Error:", sys.exc_info())
-                sys.exit()
-            for c in run_server.clients:
-                c[0].send_msg(response + "\n")
-
-    elif flags['r'] and not flags['l']:  # Run the client
-        client = Client(args.remote_host, args.port)
-        client.start()
-        while not flags['e'] and not flags['u']:
-            try:
-                if int(version) > 2:
-                    msg = input("")
-                else:
-                    msg = raw_input("")
-                client.send_msg(msg)
-                sleep(.5)
-            except KeyboardInterrupt:
-                client.tcp_client.close()
-                print("\n[*] Keyboard Interrupt Detected!  Quitting...")
-                break
-        sys.exit()
-
-    else:  # Handle not -r or -l
-        print("[!] You must use either the -r or -l flag and not both together")
 
 
 if __name__ == '__main__':
