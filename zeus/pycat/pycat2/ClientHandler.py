@@ -18,6 +18,7 @@ class ConnectionThread(threading.Thread):
             self.s.listen(5)
             self.host = host
             self.port = port
+            self.c = ""
 
         except socket.error:
             raise socket.error
@@ -32,33 +33,30 @@ class ConnectionThread(threading.Thread):
         while True:
             conn, address = self.s.accept()
 
-            c = Server.ClientServer(conn, address)
-            c.start()
+            self.c = Server.ClientServer(conn, address)
+            self.c.start()
             if common.flags['d']:
                 print("[*] Client Connected --> {h}:{p}".format(h=address[0], p=address[1]))
 
-            self.clients.append((c, (conn, address)))
+            self.clients.append((self.c, (conn, address)))
             self.update()
-
+    def stop(self):
+        try:
+            self._is_running = False
+            self.c.join()
+        except:
+            sys.exit(0)
     def terminate_all(self):
-        for c in self.clients:
-            try:
-                c[1][0].close()
-                self.clients.remove(c)
-            except:
-                if not common.flags['q']:
-                    print("[!] Error:", sys.exc_info())
-                raise Exception
+        if len(self.clients) > 0:
+            for sock in self.clients:
+                self.killclient(self.clients.index(sock))
+        else:
+            self.terminate_all()
 
-        if common.flags['d']:
-            print("[*] Terminated All Sessions")
-
-        sys.exit(0)
 
     def update(self):
         for c in self.clients:
-            if c[1][1] is None:
-                c[1][0].close()
+            if "closed" in str(c):
                 self.clients.remove(c)
 
     def listclients(self):
@@ -68,7 +66,7 @@ class ConnectionThread(threading.Thread):
             print("[*] Client List:")
             num = 0
             for c in self.clients:
-                print(str(num) + ". " + str(c[1][1]))
+                print(str(self.clients.index(c)) + ") " + str(c[1][1]))
                 num += 1
 
     def countclients(self):
@@ -76,13 +74,21 @@ class ConnectionThread(threading.Thread):
         print("[*] Total Clients:",total)
 
 
-    def killclient(self,index):
-        num = 0
-        for c in self.clients:
-            if num == index:
-                c[1][0].close()
-                self.clients.remove(num)
-                print("[-] Killed -->", self.clients[index][1][1])
-                return
-            num += 1
-        print("[!] Client does not exist!")
+    def killclient(self,client_index):
+        try:
+
+            self.clients[client_index][0].close()
+            print("[-] Killed -->", str(self.clients[client_index][1][1][0]) + ":" + str(self.clients[client_index][1][1][1]))
+            self.update()
+        except IndexError:
+            print("[!] Client [{}] does not exist!".format(client_index))
+            if common.flags['d']:
+                print(sys.exc_info())
+
+        except:
+            print("[!] Error: Unable to kill client")
+            print(sys.exc_info())
+
+        finally:
+            self.countclients()
+

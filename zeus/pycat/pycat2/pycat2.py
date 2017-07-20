@@ -2,7 +2,7 @@ import argparse
 import sys
 import Authenticate
 import common
-import ServerHandler,Client,ServerOptions
+import ClientHandler,Client,ServerOptions
 from time import sleep
 
 
@@ -83,7 +83,7 @@ def main(args):
     version = sys.version_info[0]
 
     if common.flags['l'] and not common.flags['r']:  # Run the server
-        run_server = ServerHandler.ConnectionThread(args.listening_addr, args.port)
+        run_server = ClientHandler.ConnectionThread(args.listening_addr, args.port)
         run_server.start()
         while True:
             try:
@@ -118,12 +118,15 @@ def main(args):
                 client.send_msg(msg)
                 sleep(.5)
             except KeyboardInterrupt:
-                client.tcp_client.close()
                 print("\n[*] Keyboard Interrupt Detected!  Quitting...")
-                break
+                client.tcp_client.close()
+                #client.stop()
+
+                sys.exit(0)
             except:
-                break
-        sys.exit()
+                if common.flags['d']:
+                    print(sys.exc_info())
+        sys.exit(0)
 
 if __name__ == '__main__':
     BANNER_ART = """
@@ -149,3 +152,4 @@ if __name__ == '__main__':
 
         sys.exit(0)
     main(getArgs())
+    sys.exit()

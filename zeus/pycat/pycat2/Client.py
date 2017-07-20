@@ -1,5 +1,5 @@
 import sys,threading,socket,common
-import ServerHandler,Server
+import ClientHandler,Server
 from time import sleep
 
 
@@ -12,6 +12,7 @@ class Client(threading.Thread):
         self.port = port
         self.tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.data = ""
+        self.c = ""
 
     def run(self):
         try:
@@ -31,13 +32,21 @@ class Client(threading.Thread):
         elif common.flags['u']:
             self.uploadfile(common.flags['u'])
         else:
-            c = Server.ClientServer(self.tcp_client, (self.host, self.port))
-            c.start()
+            self.c = Server.ClientServer(self.tcp_client, (self.host, self.port))
+            self.c.daemon = True
+            self.c.start()
             ############################################################################
             # This Function defines the process of sending a file to the target
             # - The file is sent in bytes
             # - The file is appended with an EOF string
             ############################################################################
+
+    def stop(self):
+        try:
+            self._is_running = False
+            self.c.join()
+        except:
+            sys.exit(0)
 
     def uploadfile(self, filename):
 
@@ -99,16 +108,17 @@ class Client(threading.Thread):
         except (ConnectionResetError, BrokenPipeError):
             if not common.flags['q']:
                 print("[!] Server Terminated Session...")
-                raise BrokenPipeError
-            if common.flags['d'] and not common.flags['q']:
+
+            if common.flags['d']:
                 print("[!] Error:", sys.exc_info())
-            sys.exit()
+            raise Exception
+
         except:
             if not common.flags['q']:
                 print("[-] Socket Failure!")
                 print("[!] Error:", sys.exc_info())
 
-            sys.exit(0)
+            raise Exception
 
     def recv_msg(self):
         data = ""
@@ -122,7 +132,7 @@ class Client(threading.Thread):
             except:
                 if not common.flags['q']:
                     print("[*] Error -->", sys.exc_info())
-                sys.exit()
+                raise Exception
             response = self.data
             response = common.fixmsgformat(response)
 

@@ -37,7 +37,7 @@ def resolveOpts(msg,server):
     elif msg == "kill all":
         server.terminate_all()
     elif msg.startswith("kill"):
-        server.killclient(msg.split(" ")[1])
+        server.killclient(int(msg.split(" ")[1]))
 
     else:
         for c in server.clients:

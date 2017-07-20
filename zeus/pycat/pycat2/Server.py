@@ -40,10 +40,15 @@ class ClientServer(threading.Thread):
                             print("[!] Connection Dropped --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
                         break
                     except OSError:
-                        sys.exit(0)
+                        if common.flags['d']:
+                            print("[!] Unknown Error -->", sys.exc_info())
+                    except:
+                        if common.flags['d']:
+                            print("[!] Unknown Error -->", sys.exc_info())
             except:
                 if not common.flags['q']:
                     print("[!] Unknown Error -->", sys.exc_info())
+                    sys.exit()
 
 
 
