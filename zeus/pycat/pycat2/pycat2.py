@@ -1,6 +1,6 @@
 import argparse
 import sys
-import Authenticate
+import Authlib
 import common
 import ClientHandler,Client,ServerOptions
 from time import sleep
@@ -49,9 +49,12 @@ def getArgs():
     parser.add_argument('-q', '--quiet', action='store_true', dest='quietflg',
                         help='Supress all error messages; should not be used with -d;'
                              'verbocity lvls = debug --> no options --> quiet')
-    parser.add_argument('-a', '--auth', action='store_true', dest='auth',
+    parser.add_argument('-a', '--auth', action='store_true', dest='auth',default=None,
                         help='If a client, prompt for the password to authenticate with the server.'
                              'If a server, prompt for a password to authenticate clients.')
+    parser.add_argument('-k', '--key', action='store', dest='key', default=None,
+                        help='Store the string either as the server authentication token or as a '
+                             'token for the client to authenticate with')
     args = parser.parse_args()
 
     try:
@@ -59,11 +62,6 @@ def getArgs():
         listenflg = True
     except:
         listenflg = False
-
-    if args.auth and listenflg is True:
-        Authenticate.GetPasswd(server=True)
-    elif args.auth and listenflg is False:
-        Authenticate.GetPasswd(server=False)
 
     try:
         len(args.upload)
@@ -75,19 +73,35 @@ def getArgs():
     common.flags = {"l": listenflg, "p": args.port, "r": args.remote_host, "u": upload,
              "upload-keyword": args.upload_keyword, "s": args.shellflg,
              "e": args.execute, "exec-keyword": args.exec_keyword, "run": args.run, "q": args.quietflg,
-             "d": args.debugflg, "auth": args.auth}
+             "d": args.debugflg, "auth": args.auth, "key": args.key}
 
     return args
 
 def main(args):
     version = sys.version_info[0]
 
+
     if common.flags['l'] and not common.flags['r']:  # Run the server
         run_server = ClientHandler.ConnectionThread(args.listening_addr, args.port)
         run_server.start()
+        if common.flags['auth'] and not common.flags['key']:
+            try:
+                Authlib.PromptPasswd()
+            except:
+                sys.exit(0)
+        if common.flags['d']:
+            print("""
+DEGUG INFO:
+
+Flags:
+{f}
+AuthLib:
+Server Token: {s}""".format(f=common.flags, s=Authlib.server_auth_token))
+            input("\nPress any key to run\n")
+            print("[+] Listening...")
         while True:
             try:
-                run_server.update()
+
                 if int(version) > 2:
                     msg = input("")
                 else:
@@ -107,14 +121,42 @@ def main(args):
 
 
     elif common.flags['r'] and not common.flags['l']:  # Run the client
-        client = Client.Client(args.remote_host, args.port)
-        client.start()
+
+        try:
+            client = Client.Client(args.remote_host, args.port)
+            common.client_start = True
+        except:
+            print("[!] Unable to Establish a Connection...")
+            print("[*] Check Your Address Arguments -r {h} -p {p}".format(h=args.remote_host, p=args.port))
+        sleep(1)
+        if common.flags['d']:
+            print("[*] Client Startup:",common.client_start)
+
+        if common.client_start == True:
+            client.start()
+        else:
+            if not common.flags['q']:
+                print("[!] Unable to Establish a Connection...")
+                print("[*] Check Your Address Arguments -r {h} -p {p}".format(h=args.remote_host, p=args.port))
+            sys.exit(0)
+
+        if common.flags['auth']:
+            try:
+                Authlib.PromptPasswd()
+            except:
+                sys.exit(0)
+        client.send_msg("[auth]" + Authlib.client_auth_token)
+
+
         while not common.flags['e'] and not common.flags['u']:
             try:
                 if int(version) > 2:
                     msg = input("pycat >> ")
                 else:
                     msg = raw_input("pycat >> ")
+                if msg == "exit":
+                    break
+
                 client.send_msg(msg)
                 sleep(.5)
             except KeyboardInterrupt:

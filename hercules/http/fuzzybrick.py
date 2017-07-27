@@ -135,16 +135,16 @@ def assign_args():
         group1 = parser.add_mutually_exclusive_group(required=True)
         group1.add_argument('--hostfile', action='store', dest='tgt_file',type=str, required=False, help='List of IPs')
         group1.add_argument('--shodan-api-key', action='store', dest='api_key', type=str,
-                           help="Shodan API key, it's free!!")
+                           help="Shodan API key, it's free!!  If you don't have a key, then you need to supply a file of IPs")
         group2 = parser.add_mutually_exclusive_group()
         group2.add_argument('-p', '--port', action='store', dest='port', type=str,
                             help='Password to log in with', default="password")
         group2.add_argument('-q', action='store', dest='query', type=str, default="DGN2200 port:'8080'",
                             help="Shodan search query")
 
-        parser.add_argument('--user', action='store', dest='username', type=str, required=True,
+        parser.add_argument('--user', action='store', dest='username', type=str,
                             help='Username to log in as',default="admin")
-        parser.add_argument('--pass', action='store', dest='password', type=str, required=True,
+        parser.add_argument('--pass', action='store', dest='password', type=str,
                             help='Password to log in with', default="password")
         parser.add_argument('--cmd',action='store', dest='cmd', type=str,
                             help='Command to Test Injection', default="echo test")

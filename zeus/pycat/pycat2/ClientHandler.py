@@ -3,6 +3,7 @@ import threading
 import sys
 import Server
 import common
+import Authlib
 
 class ConnectionThread(threading.Thread):
     """This class handles the inbound connections to the server.
@@ -20,14 +21,17 @@ class ConnectionThread(threading.Thread):
             self.port = port
             self.c = ""
 
+        except OSError:
+            print("[!] Address is already in use!")
+            sys.exit(0)
         except socket.error:
             raise socket.error
 
+
         print("[*] Listening on {h}:{p}".format(h=self.host, p=self.port))
-        self.clients = []  # FORMAT: [thread,(socket,(host,port)]
 
     def __len__(self):
-        return len(self.clients)
+        return len(Authlib.clients)
 
     def run(self):
         while True:
@@ -38,57 +42,35 @@ class ConnectionThread(threading.Thread):
             if common.flags['d']:
                 print("[*] Client Connected --> {h}:{p}".format(h=address[0], p=address[1]))
 
-            self.clients.append((self.c, (conn, address)))
-            self.update()
+                Authlib.clients.append((conn, address))
+            Authlib.update()
+
     def stop(self):
         try:
             self._is_running = False
             self.c.join()
         except:
             sys.exit(0)
+
     def terminate_all(self):
-        if len(self.clients) > 0:
-            for sock in self.clients:
-                self.killclient(self.clients.index(sock))
-        else:
-            self.terminate_all()
-
-
-    def update(self):
-        for c in self.clients:
-            if "closed" in str(c):
-                self.clients.remove(c)
-
-    def listclients(self):
-        if len(self.clients) == 0:
-            print("[*] There are no connected clients")
-        else:
-            print("[*] Client List:")
-            num = 0
-            for c in self.clients:
-                print(str(self.clients.index(c)) + ") " + str(c[1][1]))
-                num += 1
-
-    def countclients(self):
-        total = len(self.clients)
-        print("[*] Total Clients:",total)
-
+        while len(Authlib.clients) > 0:
+            self.killclient(0)
 
     def killclient(self,client_index):
         try:
 
-            self.clients[client_index][0].close()
-            print("[-] Killed -->", str(self.clients[client_index][1][1][0]) + ":" + str(self.clients[client_index][1][1][1]))
-            self.update()
+            Authlib.clients[client_index][0].close()
+            print("[+] Killed -->", str(Authlib.clients[client_index][1][0]) + ":" + str(Authlib.clients[client_index][1][1]))
+            Authlib.update()
         except IndexError:
-            print("[!] Client [{}] does not exist!".format(client_index))
+            print("[-] Client [{}] does not exist!".format(client_index))
             if common.flags['d']:
-                print(sys.exc_info())
+                print("[!] Debug Error:",sys.exc_info())
 
-        except:
+        except Exception as e:
             print("[!] Error: Unable to kill client")
             print(sys.exc_info())
 
         finally:
-            self.countclients()
+            Authlib.countclients()
 

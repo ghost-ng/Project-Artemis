@@ -15,13 +15,15 @@ class Client(threading.Thread):
         self.c = ""
 
     def run(self):
+
         try:
             conn = self.tcp_client.connect((self.host, self.port))
-        except (ConnectionError, ConnectionRefusedError):
-            if not common.flags['q']:
-                print("[!] Unable to Establish a Connection...")
-                print("[*] Check Your Address Arguments -r {h} -p {p}".format(h=self.host, p=self.port))
-            raise (ConnectionError, ConnectionRefusedError)
+            common.client_start = True
+        except:
+            if common.flags['d']:
+                print("[!] Client Startup Failed")
+            common.client_start = False
+            sys.exit(0)
         if common.flags['d']:
             print('[*] Established a Connection --> {h}:{p}'.format(h=self.host, p=self.port))
 
