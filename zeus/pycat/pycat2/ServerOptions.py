@@ -20,10 +20,16 @@ help_menu = [
     --> Terminate a select client.  ID is found with 'show clients'.
 """,
 """chat [id] [message]
-    --> dend a message to a specific client.  ID is found with 'show clients'.
+    --> send a message to a specific client.  ID is found with 'show clients'.
 """,
 """[message]
     --> Send a message to all connected clients
+""",
+"""exec all [command]
+    --> send a command to all connected clients.
+""",
+"""exec [id] [command]
+    --> send a command to a specific client.  ID is found with 'show clients'.
 """,
 """help
     --> View the help menu
