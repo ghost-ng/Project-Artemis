@@ -2,11 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fbc007b0-8bce-441d-9218-47fe2e54bf45" name="Default" comment="initial commit">
-      <change beforePath="$PROJECT_DIR$/.idea/Project-Artemis.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Project-Artemis.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/zeus/pycat/pycat2/Server.py" beforeDir="false" afterPath="$PROJECT_DIR$/zeus/pycat/pycat2/Server.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/zeus/pycat/pycat2/ServerOptions.py" beforeDir="false" afterPath="$PROJECT_DIR$/zeus/pycat/pycat2/ServerOptions.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -40,12 +36,12 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="py" value="276" />
+          <entry key="py" value="294" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="276" />
+          <entry key="Python" value="294" />
         </counts>
       </usages-collector>
     </session>
@@ -79,7 +75,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/zeus/pycat/pycat2/Authlib.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1780">
+            <state relative-caret-position="306">
+              <caret line="18" column="57" selection-start-line="18" selection-start-column="57" selection-end-line="18" selection-end-column="57" />
               <folding>
                 <element signature="e#0#14#0" expanded="true" />
               </folding>
@@ -111,8 +108,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/zeus/pycat/pycat2/ServerOptions.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="429">
-              <caret line="78" column="24" selection-start-line="78" selection-start-column="24" selection-end-line="78" selection-end-column="24" />
+            <state relative-caret-position="55">
+              <caret line="58" column="24" selection-start-line="58" selection-start-column="24" selection-end-line="58" selection-end-column="24" />
             </state>
           </provider>
         </entry>
@@ -147,6 +144,7 @@
         <option value="$PROJECT_DIR$/zeus/pycat/pycat2/ClientHandler.py" />
         <option value="$PROJECT_DIR$/zeus/pycat/pycat2/Server.py" />
         <option value="$PROJECT_DIR$/zeus/pycat/pycat2/ServerOptions.py" />
+        <option value="$PROJECT_DIR$/zeus/pycat/pycat2/Authlib.py" />
       </list>
     </option>
   </component>
@@ -310,12 +308,25 @@
       <option name="project" value="LOCAL" />
       <updated>1535746105406</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="initial commit">
+      <created>1535763205685</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1535763205685</updated>
+    </task>
+    <task id="LOCAL-00005" summary="initial commit">
+      <created>1535811368519</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1535811368519</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1616" height="876" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" weight="0.22365038" />
       <window_info id="Structure" order="1" weight="0.25" />
@@ -328,7 +339,7 @@
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.32974428" />
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.32974428" />
-      <window_info anchor="bottom" id="Terminal" order="8" weight="0.32974428" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="8" visible="true" weight="0.32974428" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="10" />
       <window_info anchor="bottom" id="Docker" order="11" show_stripe_button="false" />
@@ -434,7 +445,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/zeus/pycat/pycat2/Authlib.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1780">
+        <state relative-caret-position="306">
+          <caret line="18" column="57" selection-start-line="18" selection-start-column="57" selection-end-line="18" selection-end-column="57" />
           <folding>
             <element signature="e#0#14#0" expanded="true" />
           </folding>
@@ -460,8 +472,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/zeus/pycat/pycat2/ServerOptions.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="429">
-          <caret line="78" column="24" selection-start-line="78" selection-start-column="24" selection-end-line="78" selection-end-column="24" />
+        <state relative-caret-position="55">
+          <caret line="58" column="24" selection-start-line="58" selection-start-column="24" selection-end-line="58" selection-end-column="24" />
         </state>
       </provider>
     </entry>

@@ -78,7 +78,7 @@ def resolveOpts(msg,server):
         if cmd[1] == "all":
             Authlib.update()
             msg = cmd[2]
-            for client in Authlib.clients:
+            for client in Authlib.auth_conns:
                 msg = msg + "\n"
                 try:
                     client[0].send(msg.encode())
