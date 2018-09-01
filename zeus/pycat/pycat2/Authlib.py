@@ -16,7 +16,7 @@ def update():
         if "closed" in str(c):
             clients.remove(c)
             if common.flags['d']:
-                print("[*] Removed client from clients list")
+                print("[*] Removed client from connected clients list")
             try:
                 auth_conns.remove(c[0])
             except ValueError:

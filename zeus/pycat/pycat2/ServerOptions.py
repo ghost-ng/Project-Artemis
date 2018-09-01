@@ -56,6 +56,7 @@ def resolveOpts(msg,server):
         Authlib.listauthenticated()
     elif msg.startswith("show clients"):        #Options show clients [connected,authenticated]
         cmd = msg.split(" ")
+        Authlib.update()
         if len(cmd)== 2:
             print("[*] Connected Clients:")
             Authlib.listclients()
