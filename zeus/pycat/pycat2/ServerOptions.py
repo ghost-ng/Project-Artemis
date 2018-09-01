@@ -1,4 +1,4 @@
-import Authlib
+import Authlib,common
 
 help_menu = [
 """show clients connected
@@ -41,6 +41,8 @@ help_menu = [
 
 def resolveOpts(msg,server):
     if msg == "help":
+        if common.flags['d']:
+            print("[*] Menu --> Help")
         print("")
         print("Help Menu:")
         for item in help_menu:
@@ -50,34 +52,52 @@ def resolveOpts(msg,server):
             if msg.split(" ")[1] in item:
                 print(item)
     elif msg == "update":
+        if common.flags['d']:
+            print("[*] Menu --> Update")
         Authlib.listclients()
     elif msg == "show clients":
+        if common.flags['d']:
+            print("[*] Menu --> Show Clients")
         Authlib.listclients()
         Authlib.listauthenticated()
     elif msg.startswith("show clients"):        #Options show clients [connected,authenticated]
         cmd = msg.split(" ")
         Authlib.update()
         if len(cmd)== 2:
+            if common.flags['d']:
+                print("[*] Menu --> Connected/Authenticated Clients")
             print("[*] Connected Clients:")
             Authlib.listclients()
             print("[*] Authenticated Clients:")
             Authlib.listauthenticated()
         elif cmd[2] == "connected":
+            if common.flags['d']:
+                print("[*] Menu --> Connected Clients")
             Authlib.listclients()
         elif cmd[2] == "authenticated":
+            if common.flags['d']:
+                print("[*] Menu --> Authenticated")
             Authlib.listauthenticated()
     elif msg.startswith("count clients"):
+        if common.flags['d']:
+            print("[*] Menu --> Count Clients")
             Authlib.countclients()
     elif msg == "kill all":
+        if common.flags['d']:
+            print("[*] Menu --> Kill All")
         server.terminate_all()
     elif msg.startswith("kill"):
         server.killclient(int(msg.split(" ")[1]))
 
     elif msg.startswith("chat"):
-        cmd = msg.split(" ")
-        if cmd[1] == "all":
+        if common.flags['d']:
+            print("[*] Menu --> Chat")
+        phrase = msg.split(" ")
+        if phrase[1] == "all":
+            if common.flags['d']:
+                print("[*] Menu --> Chat All")
             Authlib.update()
-            msg = cmd[2]
+            msg = phrase[2]
             for client in Authlib.auth_conns:
                 msg = msg + "\n"
                 try:

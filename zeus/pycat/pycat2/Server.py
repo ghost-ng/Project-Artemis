@@ -72,6 +72,7 @@ class ClientServer(threading.Thread):
 
             self.addr = None
             self.conn.close()
+            Authlib.update()
             return
 
 #        elif self.data.startswith("[chat]"):
