@@ -74,11 +74,11 @@ class ClientServer(threading.Thread):
             self.conn.close()
             return
 
-        elif self.data.startswith("[chat]"):
-            chat = self.data.strip("[chat]")
-            self.printdata(chat.lstrip())
-            self.send_msg(chat)
-            chat = ''
+#        elif self.data.startswith("[chat]"):
+#            chat = self.data.strip("[chat]")
+#            self.printdata(chat.lstrip())
+#            self.send_msg(chat)
+#            chat = ''
 
         elif self.data.startswith(common.flags['exec-keyword']):
             # run if encounter the execution keyword

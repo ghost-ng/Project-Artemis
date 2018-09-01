@@ -11,7 +11,7 @@ help_menu = [
     --> Show the total # of connected clients
 """,
 """update
-    --> refresh the client list
+    --> Refresh the client list
 """,
 """kill all
     --> Terminate all the connected clients
@@ -20,22 +20,22 @@ help_menu = [
     --> Terminate a select client.  ID is found with 'show clients'.
 """,
 """chat [id] [message]
-    --> send a message to a specific client.  ID is found with 'show clients'.
+    --> Send a message to a specific client.  ID is found with 'show clients'.
 """,
-"""[message]
+"""chat all
     --> Send a message to all connected clients
 """,
 """exec all [command]
-    --> send a command to all connected clients.
+    --> Send a command to all connected clients.
 """,
 """exec [id] [command]
-    --> send a command to a specific client.  ID is found with 'show clients'.
+    --> Send a command to a specific client.  ID is found with 'show clients'.
 """,
 """help
     --> View the help menu
 """,
 """help [keyword]
-    -->Display specific help topics
+    --> Display specific help topics
 """
 ]
 
@@ -55,10 +55,15 @@ def resolveOpts(msg,server):
         Authlib.listclients()
         Authlib.listauthenticated()
     elif msg.startswith("show clients"):        #Options show clients [connected,authenticated]
-        string = msg.split(" ")
-        if string[2] == "connected":
+        cmd = msg.split(" ")
+        if len(cmd)== 2:
+            print("[*] Connected Clients:")
             Authlib.listclients()
-        elif string[2] == "authenticated":
+            print("[*] Authenticated Clients:")
+            Authlib.listauthenticated()
+        elif cmd[2] == "connected":
+            Authlib.listclients()
+        elif cmd[2] == "authenticated":
             Authlib.listauthenticated()
     elif msg.startswith("count clients"):
             Authlib.countclients()
@@ -67,11 +72,16 @@ def resolveOpts(msg,server):
     elif msg.startswith("kill"):
         server.killclient(int(msg.split(" ")[1]))
 
-    else:
-        for client in Authlib.clients:
-            msg = msg + "\n"
+    elif msg.startswith("chat"):
+        cmd = msg.split(" ")
+        if cmd[1] == "all":
             Authlib.update()
-            client[0].send(msg.encode())
-            print(1)
-            print(client)
+            msg = cmd[2]
+            for client in Authlib.clients:
+                msg = msg + "\n"
+                try:
+                    client[0].send(msg.encode())
+                except:
+                    print("[!] Unable to send message to:",client[0])
+
 
