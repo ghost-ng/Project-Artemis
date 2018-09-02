@@ -113,12 +113,13 @@ class Client(threading.Thread):
 
             if common.flags['d']:
                 print("[!] Error:", sys.exc_info())
-            raise Exception
 
         except:
-            if not common.flags['q']:
+            print("[!] Unable to Connect")
+            if common.flags['d']:
                 print("[-] Socket Failure!")
-                print("[!] Error:", sys.exc_info())
+                if not common.flags['q']:
+                    print("[!] Error:", sys.exc_info())
 
             raise Exception
 
