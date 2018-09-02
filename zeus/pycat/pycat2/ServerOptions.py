@@ -98,11 +98,17 @@ def resolveOpts(msg,server):
                 print("[*] Menu --> Chat All")
             Authlib.update()
             msg = phrase[2]
-            for client in Authlib.auth_conns:
-                msg = msg + "\n"
+            if len(Authlib.auth_conns) == 1:
                 try:
-                    client[0].send(msg.encode())
+                    Authlib.auth_conns.send(msg.encode())
                 except:
-                    print("[!] Unable to send message to:",client[0])
+                    print("[!] Unable to send message to:", Authlib.auth_conns)
+            else:
+                for client in Authlib.auth_conns:
+                    msg = msg + "\n"
+                    try:
+                        client[0].send(msg.encode())
+                    except:
+                        print("[!] Unable to send message to:",client[0])
 
 
