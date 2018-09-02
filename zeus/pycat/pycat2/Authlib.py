@@ -103,7 +103,7 @@ def AuthenticateClient():
     return client_auth_token
 
 def AuthenticateServer(conn=None,data=""):
-    if common.flags['auth']:
+    if common.flags['auth'] or common.flags['key']:
         try:
             auth_conns.index(conn)
             authenticated = True
