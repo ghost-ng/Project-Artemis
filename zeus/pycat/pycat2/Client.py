@@ -121,8 +121,6 @@ class Client(threading.Thread):
                 if not common.flags['q']:
                     print("[!] Error:", sys.exc_info())
 
-            raise Exception
-
     def recv_msg(self):
         data = ""
         while True:
