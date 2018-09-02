@@ -107,19 +107,15 @@ class Client(threading.Thread):
             if common.flags['d']:
                 print("[*] Sent:", msg)
 
-        except (ConnectionResetError, BrokenPipeError):
-            if not common.flags['q']:
-                print("[!] Server Terminated Session...")
-
-            if common.flags['d']:
-                print("[!] Error:", sys.exc_info())
-
-        except:
+        except (ConnectionResetError, BrokenPipeError,Exception):
             print("[!] Unable to Connect")
             if common.flags['d']:
-                print("[-] Socket Failure!")
-                if not common.flags['q']:
-                    print("[!] Error:", sys.exc_info())
+                print("[!] Error:", sys.exc_info())
+            sys.exit(0)
+        except:
+            print("[!] Unhandled Error")
+            if common.flags['d']:
+                print("[!] Error:", sys.exc_info())
             sys.exit(0)
 
     def recv_msg(self):
