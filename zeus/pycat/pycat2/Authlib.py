@@ -1,5 +1,6 @@
 import hashlib
 import common
+from sys import exc_info
 
 clients = []                #FORMAT: [(socket_conn,(host,port))]
 auth_conns = []             #FORMAT: [conn]
@@ -23,6 +24,17 @@ def update():
                 pass
             if common.flags['d']:
                 print("[*] Removed client from authenticated clients list")
+
+def findIndexofClient(conn):
+    try:
+        index = auth_conns.index(conn)
+        print("[*] Found Index:",index)
+    except:
+        print("[!] Unable to find client index in Authenticated Client List")
+        if common.flags['d']:
+            print(exc_info())
+    return index
+
 
 def listclients():
     global clients

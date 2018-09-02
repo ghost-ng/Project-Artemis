@@ -1,4 +1,4 @@
-import threading,common,sys,re,subprocess,Authlib
+import threading,common,sys,re,subprocess,Authlib,ClientHandler
 
 class ClientServer(threading.Thread):
 
@@ -57,7 +57,7 @@ class ClientServer(threading.Thread):
     def ResolveOptions(self):
 
         #Before any options are processed, determine if the client is already on the client list,
-        #If the client is on the client list, it must have already successfully authenticated...
+        #If the client is on the authenticated_client list, it must have already successfully authenticated...
         #If this is a new client, it must pass an authentication token and is it correct?
 
         auth_status = Authlib.AuthenticateServer(self.conn,self.data)
@@ -70,9 +70,10 @@ class ClientServer(threading.Thread):
                 print("[*] Found Termination String!")
                 print("[-] Session terminated --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
 
-            self.addr = None
-            self.conn.close()
-            Authlib.update()
+#            self.addr = None
+#            self.conn.close()
+#            Authlib.update()
+            ClientHandler.killclient(Authlib.findIndexofClient(self.conn))
             return
 
 #        elif self.data.startswith("[chat]"):
