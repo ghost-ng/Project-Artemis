@@ -99,8 +99,10 @@ def resolveOpts(msg,server):
             Authlib.update()
             msg = phrase[2]
             if len(Authlib.auth_conns) == 1:
+                client = Authlib.auth_conns
                 try:
-                    Authlib.auth_conns.send(msg.encode())
+                    client.send(msg.encode())
+                    print("[*] Sent chat to",client)
                 except:
                     print("[!] Unable to send message to:", Authlib.auth_conns)
             else:
