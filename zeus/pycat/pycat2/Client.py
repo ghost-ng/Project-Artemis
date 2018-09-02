@@ -120,6 +120,7 @@ class Client(threading.Thread):
                 print("[-] Socket Failure!")
                 if not common.flags['q']:
                     print("[!] Error:", sys.exc_info())
+            sys.exit(0)
 
     def recv_msg(self):
         data = ""
