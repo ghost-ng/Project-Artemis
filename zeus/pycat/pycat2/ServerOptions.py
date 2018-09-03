@@ -54,7 +54,7 @@ def resolveOpts(msg,server):
     elif msg == "update":
         if common.flags['d']:
             print("[*] Menu --> Update")
-        Authlib.listclients()
+        Authlib.update()
     elif msg == "show clients":
         if common.flags['d']:
             print("[*] Menu --> Show Clients")
