@@ -69,13 +69,12 @@ def listclients():
     global auth_conns
 
     update(auth_conns)
-    update(clients
-           )
+    update(clients)
     loop = 0
     list_type = "Connected"
     li = clients
 
-    while loop < 1:
+    while loop < 2:
 
         if len(li) == 0:
             print("[*] There are no {} clients".format(list_type))
