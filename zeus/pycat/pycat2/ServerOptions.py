@@ -51,8 +51,8 @@ def resolveOpts(msg,server):
     elif msg == "update":
         if common.flags['d']:
             print("[*] Menu --> Update")
-        Authlib.update()
-        Authlib.listclients()
+        Authlib.update(Authlib.clients)
+        Authlib.update(Authlib.auth_conns)
     elif msg == "show clients":
         if common.flags['d']:
             print("[*] Menu --> Show Clients")
@@ -75,7 +75,7 @@ def resolveOpts(msg,server):
         if phrase[1] == "all":
             if common.flags['d']:
                 print("[*] Menu --> Chat All")
-            Authlib.update()
+            Authlib.update(Authlib.auth_conns)
             msg = phrase[2]
             msg = msg + "\n"
             if len(Authlib.auth_conns) == 1:
