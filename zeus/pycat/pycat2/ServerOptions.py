@@ -1,5 +1,5 @@
 import Authlib,common
-
+from sys import exc_info
 help_menu = [
 """show clients connected
     --> List all connected clients
@@ -105,6 +105,8 @@ def resolveOpts(msg,server):
                     print("[*] Sent chat to",client)
                 except:
                     print("[!] Unable to send message to:", Authlib.auth_conns)
+                    if common.flags['d']:
+                        print("[!] Error:",exc_info())
             else:
                 for client in Authlib.auth_conns:
                     msg = msg + "\n"
@@ -112,5 +114,7 @@ def resolveOpts(msg,server):
                         client[0].send(msg.encode())
                     except:
                         print("[!] Unable to send message to:",client[0])
+                        if common.flags['d']:
+                            print("[!] Error:", exc_info())
 
 

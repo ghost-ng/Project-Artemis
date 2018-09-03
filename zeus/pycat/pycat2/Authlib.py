@@ -48,8 +48,13 @@ def listclients():
         for c in clients:
             print(str(clients.index(c)) + ") " + str(c[1]))
             num += 1
+    if common.flags['d']:
+        print("[*] Raw List:")
+        print(clients)
 
 def listauthenticated():
+    global auth_conns
+    update()
     if len(auth_conns) == 0:
         print("[*] There are no authenticated clients")
     else:
@@ -58,6 +63,9 @@ def listauthenticated():
         for c in auth_conns:
             print(chr(ord('a') + num) + ") " + str(c.getpeername()))
             num += 1
+    if common.flags['d']:
+        print("[*] Raw List:")
+        print(clients)
 
 def countclients():
 
