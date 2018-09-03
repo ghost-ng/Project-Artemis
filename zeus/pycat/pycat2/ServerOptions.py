@@ -114,7 +114,7 @@ def resolveOpts(msg,server):
                 for client in Authlib.auth_conns:
                     msg = msg + "\n"
                     try:
-                        client[0].send(msg.encode())
+                        (client[0]).send(msg.encode())
                     except:
                         print("[!] Unable to send message to:",client[0])
                         if common.flags['d']:
