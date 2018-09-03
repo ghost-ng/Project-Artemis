@@ -62,6 +62,8 @@ class ConnectionThread(threading.Thread):
 
             Authlib.clients[client_index][0].close()
             print("[+] Killed -->", str(Authlib.clients[client_index][1][0]) + ":" + str(Authlib.clients[client_index][1][1]))
+            if common.flags['d']:
+                print("[*] Killed:",Authlib.clients[client_index][0])
             Authlib.update()
 #            sleep(10)
         except IndexError:
