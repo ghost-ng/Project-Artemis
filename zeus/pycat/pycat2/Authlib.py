@@ -168,7 +168,7 @@ def AuthenticateServer(conn=None,addr=None,data=""):
                     print("[*] Authentication failed")
                 return False
             else:
-                auth_conns.append(conn,addr)
+                auth_conns.append((conn,addr))
                 if common.flags['d']:
                     print("[*] Client is now authenticated -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
                 return True
