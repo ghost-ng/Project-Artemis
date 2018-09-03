@@ -1,11 +1,8 @@
 import Authlib,common
 from sys import exc_info
 help_menu = [
-"""show clients connected
-    --> List all connected clients
-""",
-"""show clients authenticated
-    --> List only authenticated clients
+"""show clients
+    --> List all clients
 """,
 """count clients
     --> Show the total # of connected clients
@@ -56,14 +53,9 @@ def resolveOpts(msg,server):
             print("[*] Menu --> Update")
         Authlib.update()
         Authlib.listclients()
-        Authlib.listauthenticated()
-
     elif msg == "show clients":
         if common.flags['d']:
             print("[*] Menu --> Show Clients")
-        Authlib.listclients()
-        Authlib.listauthenticated()
-    elif msg.startswith("show clients"):        #Options show clients [connected,authenticated]
         Authlib.listclients()
     elif msg.startswith("count clients"):
         if common.flags['d']:
