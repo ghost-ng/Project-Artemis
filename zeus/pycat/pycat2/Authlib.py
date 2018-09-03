@@ -66,8 +66,8 @@ def listclients():
     list_type = "Connected"
     li = clients
 
-    while loop < 2:
-        loop =+ 1
+    while loop < 1:
+
         if len(li) == 0:
             print("[*] There are no {} clients".format(list_type))
         else:
@@ -76,6 +76,7 @@ def listclients():
             for c in li:
                 print(str(li.index(c)) + ") " + str(c[1]))
                 num += 1
+        loop = + 1
         if common.flags['d']:
             print("[*] Raw List:")
             print(li)

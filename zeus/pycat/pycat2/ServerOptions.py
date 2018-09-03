@@ -64,23 +64,7 @@ def resolveOpts(msg,server):
         Authlib.listclients()
         Authlib.listauthenticated()
     elif msg.startswith("show clients"):        #Options show clients [connected,authenticated]
-        cmd = msg.split(" ")
-        Authlib.update()
-        if len(cmd)== 2:
-            if common.flags['d']:
-                print("[*] Menu --> Connected/Authenticated Clients")
-            print("[*] Connected Clients:")
-            Authlib.listclients()
-            print("[*] Authenticated Clients:")
-            Authlib.listauthenticated()
-        elif cmd[2] == "connected":
-            if common.flags['d']:
-                print("[*] Menu --> Connected Clients")
-            Authlib.listclients()
-        elif cmd[2] == "authenticated":
-            if common.flags['d']:
-                print("[*] Menu --> Authenticated")
-            Authlib.listauthenticated()
+        Authlib.listclients()
     elif msg.startswith("count clients"):
         if common.flags['d']:
             print("[*] Menu --> Count Clients")
