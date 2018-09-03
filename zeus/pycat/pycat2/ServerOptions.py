@@ -101,9 +101,11 @@ def resolveOpts(msg,server):
                 print("[*] Menu --> Chat All")
             Authlib.update()
             msg = phrase[2]
+            msg = msg + "\n"
             if len(Authlib.auth_conns) == 1:
 #                client = Authlib.auth_conns
-                client = Authlib.auth_conns[0]
+                client = Authlib.auth_conns
+
                 try:
                     client.send(msg.encode())
                     print("[*] Sent chat to",client)
@@ -113,7 +115,7 @@ def resolveOpts(msg,server):
                         print("[!] Error:",exc_info())
             else:
                 for client in Authlib.auth_conns:
-                    msg = msg + "\n"
+
                     try:
                         client[0].send(msg.encode())
                     except:

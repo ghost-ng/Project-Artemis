@@ -3,7 +3,7 @@ import common
 from sys import exc_info
 
 clients = []                #FORMAT: [(socket_conn,(host,port))]
-auth_conns = []             #FORMAT: [conn]
+auth_conns = []
 
 client_auth_token = ""    #The token used to prove authentication
 server_auth_token = ""
@@ -12,60 +12,76 @@ server_auth_token = ""
 
 def update():
     global clients
+    global auth_conns
+    if common.flags['d']:
+        print("[*] Debug Info:")
+        print("Client List:",clients)
+        print("Authenticated List:",auth_conns)
 
-    for c in clients:
-        if "closed" in str(c):
-            clients.remove(c)
-            if common.flags['d']:
-                print("[*] Removed client from connected clients list")
-            try:
-                auth_conns.remove(c[0])
-            except ValueError:
-                pass
-            if common.flags['d']:
-                print("[*] Removed client from authenticated clients list")
+    count = 0
+
+    if len(clients) == 1:
+        clients = []
+    elif len(clients) > 1:
+        for c in clients:
+            if "closed" in str(c):
+                try:
+                    clients.remove(c)
+                except ValueError:
+                    pass
+                if common.flags['d']:
+                    print("[*] Removed client from connected clients list:",c)
+
+    if len(auth_conns) == 1:
+        auth_conns = []
+        count = 1
+    elif len(auth_conns) > 1:
+        for c in auth_conns:
+            if "closed" in str(c):
+                try:
+                    auth_conns.remove(c)
+                    count += 1
+                except ValueError:
+                    pass
+                if common.flags['d']:
+                    print("[*] Removed client from authenticated clients list:",c)
+    print("[*] Removed {} Clients from the Authentication List".format(count))
 
 def findIndexofClient(conn):
     try:
         index = auth_conns.index(conn)
         print("[*] Found Index:",index)
+        return index
     except:
         print("[!] Unable to find client index in Authenticated Client List")
         if common.flags['d']:
             print(exc_info())
-    return index
 
 
 def listclients():
     global clients
-
-    update()
-    if len(clients) == 0:
-        print("[*] There are no connected clients")
-    else:
-        print("[*] Client List:")
-        num = 0
-        for c in clients:
-            print(str(clients.index(c)) + ") " + str(c[1]))
-            num += 1
-    if common.flags['d']:
-        print("[*] Raw List:")
-        print(clients)
-
-def listauthenticated():
     global auth_conns
     update()
-    if len(auth_conns) == 0:
-        print("[*] There are no authenticated clients")
-    else:
-        print("[*] Authenticated Client List:")
-        num = 0
-        for c in auth_conns:
-            print(chr(ord('a') + num) + ") " + str(c.getpeername()))
-            num += 1
-    if common.flags['d']:
-        print("[*] Raw List:")
-        print(clients)
+    loop = 0
+    list_type = "Connected"
+    li = clients
+
+    while loop < 2:
+        loop =+ 1
+        if len(li) == 0:
+            print("[*] There are no {} clients".format(list_type))
+        else:
+            print("[*] {} List:".format(list_type))
+            num = 0
+            for c in li:
+                print(str(li.index(c)) + ") " + str(c[1]))
+                num += 1
+        if common.flags['d']:
+            print("[*] Raw List:")
+            print(li)
+        li = auth_conns
+        list_type = "Authenticated"
+
 
 def countclients():
 
