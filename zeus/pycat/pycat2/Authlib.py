@@ -10,42 +10,48 @@ server_auth_token = ""
 
 
 
-def update():
+def update(conn_list):
     global clients
     global auth_conns
+    if conn_list == clients:
+        conn_type = "Connected"
+    else:
+        conn_type = "Authenticated"
     if common.flags['d']:
         print("[*] Debug Info:")
-        print("Client List:",clients)
-        print("Authenticated List:",auth_conns)
-
+        print(conn_type,conn_list)
     count = 0
 
-    if len(clients) == 1:
+    if len(conn_list) == 1 and "closed" in str(conn_list):
         clients = []
-    elif len(clients) > 1:
-        for c in clients:
-            if "closed" in str(c):
-                try:
-                    clients.remove(c)
-                except ValueError:
-                    pass
-                if common.flags['d']:
-                    print("[*] Removed client from connected clients list:",c)
-
-    if len(auth_conns) == 1:
-        auth_conns = []
         count = 1
-    elif len(auth_conns) > 1:
-        for c in auth_conns:
+    elif len(conn_list) > 1:
+        for c in conn_list:
             if "closed" in str(c):
                 try:
-                    auth_conns.remove(c)
-                    count += 1
+                    conn_list.remove(c)
+                    count =+1
                 except ValueError:
                     pass
                 if common.flags['d']:
-                    print("[*] Removed client from authenticated clients list:",c)
-    print("[*] Removed {} Clients from the Authentication List".format(count))
+                    print("[*] Removed Client from {} List:".format(conn_type),c)
+    print("[*] Removed {} Clients".format(count))
+
+
+    # if len(auth_conns) == 1:
+    #     auth_conns = []
+    #     count = 1
+    # elif len(auth_conns) > 1:
+    #     for c in auth_conns:
+    #         if "closed" in str(c):
+    #             try:
+    #                 auth_conns.remove(c)
+    #                 count += 1
+    #             except ValueError:
+    #                 pass
+    #             if common.flags['d']:
+    #                 print("[*] Removed client from authenticated clients list:",c)
+
 
 def findIndexofClient(conn):
     try:

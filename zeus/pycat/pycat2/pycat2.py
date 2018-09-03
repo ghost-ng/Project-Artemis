@@ -94,9 +94,7 @@ def main(args):
 DEGUG INFO:
 
 Flags:
-{f}
-AuthLib:
-Server Token: {s}""".format(f=common.flags, s=Authlib.server_auth_token))
+{f}""".format(f=common.flags))
             input("\nPress any key to run\n")
             print("[+] Listening...")
         while True:
