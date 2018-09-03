@@ -4,6 +4,7 @@ import sys
 import Server
 import common
 import Authlib
+from time import sleep
 
 class ConnectionThread(threading.Thread):
     """This class handles the inbound connections to the server.
@@ -62,6 +63,7 @@ class ConnectionThread(threading.Thread):
             Authlib.clients[client_index][0].close()
             print("[+] Killed -->", str(Authlib.clients[client_index][1][0]) + ":" + str(Authlib.clients[client_index][1][1]))
             Authlib.update()
+            sleep(10)
         except IndexError:
             print("[-] Client [{}] does not exist!".format(client_index))
             if common.flags['d']:

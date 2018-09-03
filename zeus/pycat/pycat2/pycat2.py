@@ -154,11 +154,12 @@ Server Token: {s}""".format(f=common.flags, s=Authlib.server_auth_token))
                     msg = input("pycat >> ")
                 else:
                     msg = raw_input("pycat >> ")
-                if msg == "exit":
+                if msg == "exit" or msg == "quit":
                     break
-
                 client.send_msg(msg)
                 sleep(.5)
+                client.tcp_client.close()
+                sys.exit(0)
             except KeyboardInterrupt:
                 print("\n[*] Keyboard Interrupt Detected!  Quitting...")
                 client.tcp_client.close()
