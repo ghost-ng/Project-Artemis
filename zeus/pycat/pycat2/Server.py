@@ -15,8 +15,8 @@ class ClientServer(threading.Thread):
         while True:
 
             try:
-                if common.flags['d']:
-                    print("[*] Listening for incoming data...")
+#                if common.flags['d']:
+#                    print("[*] Listening for incoming data...")
                 while not self.data.endswith('\n'):
 
                     try:
