@@ -60,8 +60,10 @@ class ClientServer(threading.Thread):
         #If the client is on the authenticated_client list, it must have already successfully authenticated...
         #If this is a new client, it must pass an authentication token and is it correct?
 
-        auth_status = Authlib.AuthenticateServer(self.conn,self.data)
+        auth_status = Authlib.AuthenticateServer(self.conn,self.addr,self.data)
         if auth_status == False:
+            if common.flags['d']:
+                print("[*] Authentication Failed -->",self.addr)
             self.conn.close()
             return
 
@@ -70,10 +72,7 @@ class ClientServer(threading.Thread):
                 print("[*] Found Termination String!")
                 print("[-] Session terminated --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
 
-#            self.addr = None
-#            self.conn.close()
-#            Authlib.update()
-            ClientHandler.killclient(Authlib.findIndexofClient(self.conn))
+            ClientHandler.killclient(Authlib.findIndexofClient(self.conn,self.addr))
             return
 
 #        elif self.data.startswith("[chat]"):

@@ -44,7 +44,7 @@ class ConnectionThread(threading.Thread):
                 print("[*] Client Connected --> {h}:{p}".format(h=address[0], p=address[1]))
 
                 Authlib.clients.append((conn, address))
-            Authlib.update()
+            Authlib.update(Authlib.clients)
 
     def stop(self):
         try:
@@ -64,7 +64,7 @@ class ConnectionThread(threading.Thread):
             print("[+] Killed -->", str(Authlib.clients[client_index][1][0]) + ":" + str(Authlib.clients[client_index][1][1]))
             if common.flags['d']:
                 print("[*] Killed:",Authlib.clients[client_index][0])
-            Authlib.update()
+            Authlib.update(Authlib.clients)
 #            sleep(10)
         except IndexError:
             print("[-] Client [{}] does not exist!".format(client_index))

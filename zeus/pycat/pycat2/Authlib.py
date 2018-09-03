@@ -2,8 +2,8 @@ import hashlib
 import common
 from sys import exc_info
 
-clients = []                #FORMAT: [(socket_conn,(host,port))]
-auth_conns = []
+clients = []                #FORMAT: [(socket_conn,(host,port))]  --> [(conn, address)]
+auth_conns = []             #FORMAT: [(socket_conn,(host,port))]  --> [(conn, address)]
 
 client_auth_token = ""    #The token used to prove authentication
 server_auth_token = ""
@@ -67,7 +67,10 @@ def findIndexofClient(conn):
 def listclients():
     global clients
     global auth_conns
-    update()
+
+    update(auth_conns)
+    update(clients
+           )
     loop = 0
     list_type = "Connected"
     li = clients
@@ -145,7 +148,9 @@ def AuthenticateClient():
     PromptPasswd()
     return client_auth_token
 
-def AuthenticateServer(conn=None,data=""):
+def AuthenticateServer(conn=None,addr=None,data=""):
+    global auth_conns
+
     if common.flags['auth'] or common.flags['key']:
         try:
             auth_conns.index(conn)
@@ -163,7 +168,7 @@ def AuthenticateServer(conn=None,data=""):
                     print("[*] Authentication failed")
                 return False
             else:
-                auth_conns.append(conn)
+                auth_conns.append(conn,addr)
                 if common.flags['d']:
                     print("[*] Client is now authenticated -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
                 return True
