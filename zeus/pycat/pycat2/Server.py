@@ -72,7 +72,7 @@ class ClientServer(threading.Thread):
                 print("[*] Found Termination String!")
                 print("[-] Session terminated --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
 
-            ClientHandler.killclient(Authlib.findIndexofClient(self.conn,self.addr))
+            ClientHandler.killclient(Authlib.findIndexofClient(self.conn))
             return
 
 #        elif self.data.startswith("[chat]"):

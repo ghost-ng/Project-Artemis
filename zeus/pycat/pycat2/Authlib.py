@@ -2,60 +2,43 @@ import hashlib
 import common
 from sys import exc_info
 
-clients = []                #FORMAT: [(socket_conn,(host,port))]  --> [(conn, address)]
-auth_conns = []             #FORMAT: [(socket_conn,(host,port))]  --> [(conn, address)]
+clients = []              #Format: [(socket_connection, yes/no),(socket_connection, yes/no)]
+                          #        [(socket_connection,authenticated?)]
 
 client_auth_token = ""    #The token used to prove authentication
 server_auth_token = ""
 
-
-
-def update(conn_list):
+def update():
     global clients
-    global auth_conns
-    if conn_list == clients:
-        conn_type = "Connected"
-    else:
-        conn_type = "Authenticated"
+
     if common.flags['d']:
         print("[*] Debug Info:")
-        print(conn_type,conn_list)
+        print("Raw Connections:",clients)
     count = 0
-
-    if len(conn_list) == 1 and "closed" in str(conn_list):
-        clients = []
-        count = 1
-    elif len(conn_list) > 1:
-        for c in conn_list:
-            if "closed" in str(c):
-                try:
-                    conn_list.remove(c)
-                    count =+1
-                except ValueError:
-                    pass
+    for c in clients:
+        if "closed" in str(c):
+            try:
+                clients.remove(c)
+                count =+ 1
                 if common.flags['d']:
-                    print("[*] Removed Client from {} List:".format(conn_type),c)
+                    print("[*] Removed Client {} From List:".format(str(c.getpeername()[0]) + ":" + str(c.getpeername()[1])))
+            except ValueError:
+                pass
+            except:
+                print("[!] Unknown Error:",exc_info())
     print("[*] Removed {} Clients".format(count))
 
-
-    # if len(auth_conns) == 1:
-    #     auth_conns = []
-    #     count = 1
-    # elif len(auth_conns) > 1:
-    #     for c in auth_conns:
-    #         if "closed" in str(c):
-    #             try:
-    #                 auth_conns.remove(c)
-    #                 count += 1
-    #             except ValueError:
-    #                 pass
-    #             if common.flags['d']:
-    #                 print("[*] Removed client from authenticated clients list:",c)
-
+def add_new_client(conn):
+    global clients
+    for c in clients:
+        if conn in c:
+            pass
+        else:
+            clients.append((conn,"yes"))
 
 def findIndexofClient(conn):
     try:
-        index = auth_conns.index(conn)
+        index = clients.index(conn)
         print("[*] Found Index:",index)
         return index
     except:
@@ -66,9 +49,7 @@ def findIndexofClient(conn):
 
 def listclients():
     global clients
-    global auth_conns
 
-    update(auth_conns)
     update(clients)
     loop = 0
     list_type = "Connected"
@@ -143,16 +124,17 @@ def CheckPasswd(token=server_auth_token,data=''):
     elif token not in data:
         return False
 
+
 def AuthenticateClient():
     PromptPasswd()
     return client_auth_token
 
 def AuthenticateServer(conn=None,addr=None,data=""):
-    global auth_conns
+    global clients
 
     if common.flags['auth'] or common.flags['key']:
         try:
-            auth_conns.index(conn)
+            clients.index(conn)
             authenticated = True
             if common.flags['d']:
                 print("[*] Client is already authenticated")
@@ -167,7 +149,7 @@ def AuthenticateServer(conn=None,addr=None,data=""):
                     print("[*] Authentication failed")
                 return False
             else:
-                auth_conns.append((conn,addr))
+                add_new_client(conn)
                 if common.flags['d']:
                     print("[*] Client is now authenticated -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
                 return True
