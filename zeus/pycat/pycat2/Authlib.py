@@ -34,14 +34,19 @@ def update():
 
 def add_new_client(conn,auth_status=False):
     global clients
+    count = 0
     for c in clients:
         if conn in c:
-            pass
+            index = findIndexofClient(c)
+            clients[count][1] = True
+            break
         else:
-            clients.append((conn,auth_status))
+            client = (conn,auth_status)
+            clients.append(client)
+        count =+1
         if common.flags['d']:
             print("[+] Added to Client List:")
-            print(conn)
+            print(client)
 
 def findIndexofClient(attribute):
     global clients
@@ -61,8 +66,7 @@ def findIndexofClient(attribute):
 
 def listclients():
     global clients
-
-    update(clients)
+    update()
     count = 1
 
     if len(clients) == 0:
@@ -152,7 +156,7 @@ def AuthenticateServer(conn=None,addr=None,data=""):
             auth = CheckPasswd(server_auth_token, token)
             if auth == False:
                 if common.flags['d']:
-                    print("[*] Authentication failed")
+                    print("[*] Authentication failed -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
                 return False
             else:
                 add_new_client(conn,True)
