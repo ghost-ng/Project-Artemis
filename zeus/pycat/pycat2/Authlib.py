@@ -2,7 +2,7 @@ import hashlib
 import common
 from sys import exc_info
 
-clients = []              #Format: [(socket_connection, yes/no),(socket_connection, yes/no)]
+clients = []              #Format: [(socket_connection, True/False),(socket_connection, True/False)]
                           #        [(socket_connection,authenticated?)]
 
 client_auth_token = ""    #The token used to prove authentication
@@ -12,8 +12,11 @@ def update():
     global clients
 
     if common.flags['d']:
+        print("****************")
         print("[*] Debug Info:")
-        print("Raw Connections:",clients)
+        print("Raw Connections:")
+        print(clients)
+        print("****************\n")
     count = 0
     for c in clients:
         if "closed" in str(c):
@@ -21,57 +24,60 @@ def update():
                 clients.remove(c)
                 count =+ 1
                 if common.flags['d']:
-                    print("[*] Removed Client {} From List:".format(str(c.getpeername()[0]) + ":" + str(c.getpeername()[1])))
+                    peer = str(c.getpeername()[0]) + ":" + str(c.getpeername()[1])
+                    print("[*] Removed Client --> {}".format(peer))
             except ValueError:
                 pass
             except:
                 print("[!] Unknown Error:",exc_info())
     print("[*] Removed {} Clients".format(count))
 
-def add_new_client(conn):
+def add_new_client(conn,auth_status=False):
     global clients
     for c in clients:
         if conn in c:
             pass
         else:
-            clients.append((conn,"yes"))
+            clients.append((conn,auth_status))
+        if common.flags['d']:
+            print("[+] Added to Client List:")
+            print(conn)
 
-def findIndexofClient(conn):
+def findIndexofClient(attribute):
+    global clients
+    count = 0
     try:
-        index = clients.index(conn)
-        print("[*] Found Index:",index)
-        return index
+        for c in clients:
+            if attribute == c[0] or attribute == c[1]:
+                if common.flags['d']:
+                    print("[*] Found Element in Client[{}]:".format(count))
+                return count
+            else:
+                pass
     except:
-        print("[!] Unable to find client index in Authenticated Client List")
+        print("[!] Error: Unable to find client index ")
         if common.flags['d']:
             print(exc_info())
-
 
 def listclients():
     global clients
 
     update(clients)
-    loop = 0
-    list_type = "Connected"
-    li = clients
+    count = 1
 
-    while loop < 2:
+    if len(clients) == 0:
+        print("[*] There are no connected clients")
+    for c in clients:
+        print("[*] Client List:")
+        label = "("+str(count)+")"
+        host = str(c.getpeername()[0])+":"+str(c.getpeername()[1])
+        print("{n}{s} --> Authenticated: {b}".format(n=label,s=host,b=str(c[1])))
+        count =+1
+    print("[*] There are {} connected clients".format(count))
 
-        if len(li) == 0:
-            print("[*] There are no {} clients".format(list_type))
-        else:
-            print("[*] {} List:".format(list_type))
-            num = 0
-            for c in li:
-                print(str(li.index(c)) + ") " + str(c[1]))
-                num += 1
-        loop = + 1
-        if common.flags['d']:
-            print("[*] Raw List:")
-            print(li)
-        li = auth_conns
-        list_type = "Authenticated"
-
+    if common.flags['d']:
+        print("[*] Raw List:")
+        print(clients)
 
 def countclients():
 
@@ -79,12 +85,12 @@ def countclients():
     print("[*] Total Clients:", total)
 
 def PromptPasswd():
+    """Function to get a password either to use as the authentication token or to pass to a server
+        Returns a password str
+        :type state: bool"""
+
     global server_auth_token
     global client_auth_token
-
-    """Function to get a password either to use as the authentication token or to pass to a server
-    Returns a password str
-    :type state: bool"""
 
     if common.flags['key'] and common.flags['l']:
         server_auth_token = common.flags['key']
@@ -149,7 +155,7 @@ def AuthenticateServer(conn=None,addr=None,data=""):
                     print("[*] Authentication failed")
                 return False
             else:
-                add_new_client(conn)
+                add_new_client(conn,True)
                 if common.flags['d']:
                     print("[*] Client is now authenticated -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
                 return True

@@ -67,14 +67,6 @@ class ClientServer(threading.Thread):
             self.conn.close()
             return
 
-        if self.data.startswith('quit'):  # graceful quit
-            if common.flags['d']:
-                print("[*] Found Termination String!")
-                print("[-] Session terminated --> {h}:{p}\n".format(h=self.addr[0], p=self.addr[1]))
-
-            ClientHandler.killclient(Authlib.findIndexofClient(self.conn))
-            return
-
 #        elif self.data.startswith("[chat]"):
 #            chat = self.data.strip("[chat]")
 #            self.printdata(chat.lstrip())

@@ -51,8 +51,7 @@ def resolveOpts(msg,server):
     elif msg == "update":
         if common.flags['d']:
             print("[*] Menu --> Update")
-        Authlib.update(Authlib.clients)
-        Authlib.update(Authlib.auth_conns)
+        Authlib.update()
     elif msg == "show clients":
         if common.flags['d']:
             print("[*] Menu --> Show Clients")
@@ -67,36 +66,23 @@ def resolveOpts(msg,server):
         server.terminate_all()
     elif msg.startswith("kill"):
         server.killclient(int(msg.split(" ")[1]))
-
     elif msg.startswith("chat"):
         if common.flags['d']:
             print("[*] Menu --> Chat")
-        phrase = msg.split(" ")
-        if phrase[1] == "all":
+        if msg == "chat all":
+            phrase = msg.split(" ")
             if common.flags['d']:
                 print("[*] Menu --> Chat All")
-            Authlib.update(Authlib.auth_conns)
+            Authlib.update()
             msg = phrase[2]
-            msg = msg + "\n"
-            if len(Authlib.auth_conns) == 1:
-#                client = Authlib.auth_conns
-                client = Authlib.auth_conns
-
+            msg = input("pycat >>") + "\n"
+            for client in Authlib.clients:
                 try:
                     client[0].send(msg.encode())
-                    print("[*] Sent chat to",client)
-                except:
-                    print("[!] Unable to send message to:", Authlib.auth_conns)
+                    peer = str(client.getpeername()[0]) + ":" + str(client.getpeername()[1])
                     if common.flags['d']:
-                        print("[!] Error:",exc_info())
-            else:
-                for client in Authlib.auth_conns:
-
-                    try:
-                        client[0].send(msg.encode())
-                    except:
-                        print("[!] Unable to send message to:",client[0])
-                        if common.flags['d']:
-                            print("[!] Error:", exc_info())
-
-
+                        print("[*] Chat Sent --> {}".format(peer))
+                except:
+                    print("[!] Unable to send message to:",client[0])
+                    if common.flags['d']:
+                        print("[!] Error:", exc_info())
