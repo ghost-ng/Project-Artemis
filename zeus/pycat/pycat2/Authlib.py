@@ -37,11 +37,11 @@ def add_new_client(conn,auth_status=False):
     count = 0
     for c in clients:
         if conn in c:
-            index = findIndexofClient(c)
+#            index = findIndexofClient(c)
             clients[count][1] = True
             break
         else:
-            client = (conn,auth_status)
+            client = [conn,auth_status]
             clients.append(client)
         count =+1
         if common.flags['d']:
@@ -59,6 +59,7 @@ def findIndexofClient(attribute):
                 return count
             else:
                 pass
+        return False
     except:
         print("[!] Error: Unable to find client index ")
         if common.flags['d']:
@@ -144,10 +145,12 @@ def AuthenticateServer(conn=None,addr=None,data=""):
 
     if common.flags['auth'] or common.flags['key']:
         try:
-            clients.index(conn)
-            authenticated = True
-            if common.flags['d']:
-                print("[*] Client is already authenticated")
+            if findIndexofClient(conn) == False:
+                authenticated = True
+                if common.flags['d']:
+                    print("[*] Client is already authenticated")
+            else:
+                authenticated = False
         except ValueError:
             authenticated = False
 
@@ -161,5 +164,5 @@ def AuthenticateServer(conn=None,addr=None,data=""):
             else:
                 add_new_client(conn,True)
                 if common.flags['d']:
-                    print("[*] Client is now authenticated -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
+                    print("[*] Client authenticated successfully -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
                 return True
