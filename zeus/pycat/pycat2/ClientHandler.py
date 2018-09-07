@@ -42,6 +42,7 @@ class ConnectionThread(threading.Thread):
             self.c.start()
             if common.flags['d']:
                 print("[*] Client Connected --> {h}:{p}".format(h=address[0], p=address[1]))
+                print(self.c)
             Authlib.clients.append([conn, False])
             Authlib.update()
 
