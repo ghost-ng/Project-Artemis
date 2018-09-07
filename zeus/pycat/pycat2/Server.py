@@ -59,8 +59,11 @@ class ClientServer(threading.Thread):
         #Before any options are processed, determine if the client is already on the client list,
         #If the client is on the authenticated_client list, it must have already successfully authenticated...
         #If this is a new client, it must pass an authentication token and is it correct?
-
-        auth_status = Authlib.AuthenticateServer(self.conn,self.addr,self.data)
+        if common.flags['d']:
+            print("[*] Inbound Connection:")
+            print("Connection:",self.conn)
+            print("Address:",self.addr)
+        auth_status = Authlib.AuthenticateServer(self.conn,self.data)
         if auth_status == False:
             if common.flags['d']:
                 print("[*] Authentication Failed -->",self.addr)
