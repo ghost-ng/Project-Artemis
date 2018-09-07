@@ -2,8 +2,8 @@ import hashlib
 import common
 from sys import exc_info
 
-clients = []              #Format: [(socket_connection, True/False),(socket_connection, True/False)]
-                          #        [(socket_connection,authenticated?)]
+clients = []              #Format: [[socket_connection, True/False],[socket_connection, True/False]]
+                          #        [[socket_connection,authenticated?]]
 
 client_auth_token = ""    #The token used to prove authentication
 server_auth_token = ""
@@ -140,7 +140,7 @@ def AuthenticateClient():
     PromptPasswd()
     return client_auth_token
 
-def AuthenticateServer(conn=None,addr=None,data=""):
+def AuthenticateServer(conn=None,data=""):
     global clients
 
     if common.flags['auth'] or common.flags['key']:
