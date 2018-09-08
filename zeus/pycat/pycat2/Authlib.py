@@ -142,7 +142,8 @@ def AuthenticateClient():
 
 def AuthenticateServer(socket=None,data=""):
     global clients
-
+    host = socket.getpeername()[0]
+    port = socket.getpeername()[1]
     if common.flags['auth'] or common.flags['key']:
         try:
             if findIndexofClient(socket) == False:
@@ -159,10 +160,10 @@ def AuthenticateServer(socket=None,data=""):
             auth = CheckPasswd(server_auth_token, token)
             if auth == False:
                 if common.flags['d']:
-                    print("[*] Authentication failed -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
+                    print("[*] Authentication failed -->",str(host)+":"+str(port))
                 return False
             else:
                 add_new_client(socket,True)
                 if common.flags['d']:
-                    print("[*] Client authenticated successfully -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
+                    print("[*] Client authenticated successfully -->",str(host)+":"+str(port))
                 return True
