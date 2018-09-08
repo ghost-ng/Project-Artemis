@@ -2,7 +2,7 @@ import hashlib
 import common
 from sys import exc_info
 
-clients = []              #Format: [[socket_connection, True/False],[socket_connection, True/False]]
+clients = []              #Format: [[socket, True/False],[socket_connection, True/False]]
                           #        [[socket_connection,authenticated?]]
 
 client_auth_token = ""    #The token used to prove authentication
@@ -32,16 +32,16 @@ def update():
                 print("[!] Unknown Error:",exc_info())
     print("[*] Removed {} Clients".format(count))
 
-def add_new_client(conn,auth_status=False):
+def add_new_client(socket,auth_status=False):
     global clients
     count = 0
     for c in clients:
-        if conn in c:
+        if socket in c:
 #            index = findIndexofClient(c)
             clients[count][1] = True
             break
         else:
-            client = [conn,auth_status]
+            client = [socket,auth_status]
             clients.append(client)
         count =+1
         if common.flags['d']:
@@ -140,12 +140,12 @@ def AuthenticateClient():
     PromptPasswd()
     return client_auth_token
 
-def AuthenticateServer(conn=None,data=""):
+def AuthenticateServer(socket=None,data=""):
     global clients
 
     if common.flags['auth'] or common.flags['key']:
         try:
-            if findIndexofClient(conn) == False:
+            if findIndexofClient(socket) == False:
                 authenticated = True
                 if common.flags['d']:
                     print("[*] Client is already authenticated")
@@ -162,7 +162,7 @@ def AuthenticateServer(conn=None,data=""):
                     print("[*] Authentication failed -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
                 return False
             else:
-                add_new_client(conn,True)
+                add_new_client(socket,True)
                 if common.flags['d']:
                     print("[*] Client authenticated successfully -->",str(conn.getpeername()[0])+":"+str(conn.getpeername()[1]))
                 return True
