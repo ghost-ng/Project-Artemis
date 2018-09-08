@@ -43,7 +43,7 @@ class ConnectionThread(threading.Thread):
             if common.flags['d']:
                 print("[*] Client Connected --> {h}:{p}".format(h=address[0], p=address[1]))
                 print(self.c)
-            Authlib.clients.append([conn, False])
+            Authlib.clients.append([self.c, False])
             Authlib.update()
 
     def stop(self):
