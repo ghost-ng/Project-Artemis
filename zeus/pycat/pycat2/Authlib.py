@@ -75,7 +75,7 @@ def listclients():
     for c in clients:
         print("[*] Client List:")
         label = "("+str(count)+")"
-        peer = str(c.getpeername()[0])+":"+str(c.getpeername()[1])
+        peer = str(c[0].getpeername()[0])+":"+str(c[0].getpeername()[1])
         print("{n}{s} --> Authenticated: {b}".format(n=label,s=peer,b=str(c[1])))
         count =+1
     print("[*] There are {} connected clients".format(count))

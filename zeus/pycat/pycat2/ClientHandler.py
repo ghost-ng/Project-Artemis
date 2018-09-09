@@ -60,7 +60,7 @@ class ConnectionThread(threading.Thread):
     def killclient(self,client_index):
         try:
             Authlib.clients[client_index][0].close()
-            peer = str(Authlib.clients[client_index].getpeername()[0]) + ":" + str(Authlib.clients[client_index].getpeername()[1])
+            peer = str(Authlib.clients[client_index][0].getpeername()[0]) + ":" + str(Authlib.clients[client_index][0].getpeername()[1])
             if common.flags['d']:
                 print("[+] Killed -->", peer)
             Authlib.update()

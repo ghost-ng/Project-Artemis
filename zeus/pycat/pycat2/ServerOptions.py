@@ -79,7 +79,7 @@ def resolveOpts(msg,server):
             for client in Authlib.clients:
                 try:
                     client[0].send(msg.encode())
-                    peer = str(client.getpeername()[0]) + ":" + str(client.getpeername()[1])
+                    peer = str(client[0].getpeername()[0]) + ":" + str(client[0].getpeername()[1])
                     if common.flags['d']:
                         print("[*] Chat Sent --> {}".format(peer))
                 except:
