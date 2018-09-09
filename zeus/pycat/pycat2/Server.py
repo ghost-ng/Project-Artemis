@@ -61,6 +61,7 @@ class ClientServer(threading.Thread):
         #If this is a new client, it must pass an authentication token and is it correct?
         if common.flags['d']:
             print("[*] Inbound Connection:")
+            print("[*] Socket:",self.)
             print("Connection:",self.conn)
             print("Address:",self.addr)
         auth_status = Authlib.AuthenticateServer(self.conn,self.data)
