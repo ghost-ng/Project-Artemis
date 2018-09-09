@@ -142,8 +142,11 @@ def AuthenticateClient():
 
 def AuthenticateServer(socket=None,data=""):
     global clients
+    if common.flags['d']:
+        print("[*] Authenticating")
     host = socket.getpeername()[0]
     port = socket.getpeername()[1]
+    print("[*] Authenticating --> {}:{}".format(host,port))
     if common.flags['auth'] or common.flags['key']:
         try:
             if findIndexofClient(socket) == False:
