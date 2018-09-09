@@ -156,7 +156,8 @@ Flags:
                     break
                 client.send_msg(msg)
                 sleep(.5)
-                client.tcp_client.close()
+                #client.tcp_client.close()
+                #
                 sys.exit(0)
             except KeyboardInterrupt:
                 print("\n[*] Keyboard Interrupt Detected!  Quitting...")
