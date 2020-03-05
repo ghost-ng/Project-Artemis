@@ -158,7 +158,11 @@ def listen():
     print_info("Listening for incoming TCP connection on {}:{}".format(listen_addr,listen_port))
 
     while True:
-        newsocket, fromaddr = bindsocket.accept()
+        try:
+            newsocket, fromaddr = bindsocket.accept()
+        except KeyboardInterrupt:
+            print_warn("punt")
+            exit()
         print_good("Client connected: {}:{}".format(fromaddr[0], fromaddr[1]))
         try:
             conn = context.wrap_socket(newsocket, server_side=True)
@@ -169,6 +173,8 @@ def listen():
                     prompt = source + ">"
                     command = input(prompt) # Get user input and store it in command variable
                     #print(command)
+                    if command == 'quit' or command == 'exit':
+                        exit()
                     if 'kill' in command: # If we got terminate command, inform the client and close the connect and break the loop
                         kill_session(conn, command, source)
                         break
