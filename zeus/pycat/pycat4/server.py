@@ -1,10 +1,9 @@
 #!/usr/bin/python3
-
-import socket
+import socket, ssl
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
-import ssl
 from printlib import *
 from os import path, remove
+from sys import exit
 
 VERBOSE = True
 
@@ -106,9 +105,8 @@ def send_data(s, plain_text):
     #s.send(encrypt(msg).encode('utf-8')+b"[END]")
     print_info("Sent:\n"  +plain_text)
 
-def file_transfer(conn, command):
-    
-    send_data(conn, command+"[END]")
+def file_transfer_get(conn, command):      #get file from server
+    send_data(conn, command + "[END]")
     file = command.split()
     dest_filename = file[2]
     f = open(dest_filename,'wb')
@@ -128,6 +126,20 @@ def file_transfer(conn, command):
         else:
             f.write(data)
     f.close()
+
+def file_transfer_put(conn, commands):       #push file to server
+    send_data(conn, commands + "[END]")
+    file_name = path.basename(commands.split()[1])
+    f = open(file_name, 'rb')
+    data = f.read(128)
+    if VERBOSE:
+        print_info("Sending File:\n" + file_name)
+    while data:
+        conn.send(data)
+        data = f.read(128)
+    conn.send("[END]".encode('utf-8'))
+    f.close()
+
 
 def kill_session(conn, command, source):
     print_info("Killing {}".format(source))
@@ -166,14 +178,30 @@ def listen():
                             print_warn("Incomplete command") 
                         elif len(command.split())== 2:
                             command = command + " " + command.split()[1]
-                            file_transfer(conn, command)
+                            file_transfer_get(conn, command)
                         elif len(command.split())== 3:
                             if path.dirname(command.split()[2]) != "":
                                 path_exists = path.exists(path.dirname(command.split()[2]))
                             if path_exists:
-                                file_transfer(conn, command)
+                                file_transfer_get(conn, command)
                             else:
                                 print_warn("Destination file path does not exist")
+                    elif "put" in command:
+                        path_exists = True
+                        if len(command.split()) == 1:
+                            print_warn("Incomplete command") 
+                        elif len(command.split()) == 2:      #put example
+                            if path.isfile(command.split()[1]):
+                                command = command.split()[1] + " " + path.basename(command.split()[1])
+                                file_transfer_put(conn, command)
+                            else:
+                                print_warn("File not Found")
+                        elif len(command.split())== 3:        #put example temp  [writes example as temp]
+                            if path.isfile(command.split()[1]):
+                                file_transfer_put(conn, command)   #(example, temp)  client will determine if arg2 destination filepath exists
+                            else:
+                                print_warn("Unable to locate file")
+                    
                     elif command == "cleanup":
                         send_data(conn, "del client_cert [END]")
                         send_data(conn, "del client_key [END]")

