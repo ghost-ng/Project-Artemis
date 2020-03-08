@@ -195,6 +195,7 @@ def listen():
                     #print(command)
 
                     if cmd == 'quit' or cmd == 'exit':
+                        conn.close()
                         exit()
                     elif cmd == "1":
                         command = input("get > ")
