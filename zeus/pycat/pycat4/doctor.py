@@ -7,8 +7,8 @@ from ctypes import *
 if (len(sys.argv) != 4):
     print("Usage: %s <PID> <Path To Encoded DLL> <Path to file to use for hiding>" %(sys.argv[0]))
     print("Eg: %s 1111 C:\\test\encoded.txt C:\Windows\explorer.exe" %(sys.argv[0]))
-    sys.exit(0)
-
+    sys.exit(0)     0.0
+ 
 pid = sys.argv[1]
 encoded = sys.argv[2]
 victim = sys.argv[3]

