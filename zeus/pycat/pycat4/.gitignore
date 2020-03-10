@@ -2,3 +2,4 @@
 *cert*
 shellcode
 payload.py
+*.exe
