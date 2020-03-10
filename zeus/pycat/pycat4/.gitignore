@@ -3,3 +3,4 @@
 shellcode
 payload.py
 *.exe
+*pycache*
