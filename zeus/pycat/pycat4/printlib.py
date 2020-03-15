@@ -53,3 +53,14 @@ def print_dbug(msg):
 
 def print_stat(msg):
     PrintColor("STATUS", msg)
+
+def print_question(question):
+    temp = input("[?] {}: ".format(question))
+    return temp
+
+def print_question_list(question,*args):
+    print("[?] {}".format(question))
+    for choice in args:
+        print(choice)
+    temp = input(": ")
+    return temp
