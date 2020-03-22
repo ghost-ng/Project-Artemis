@@ -133,7 +133,7 @@ def file_transfer_get(conn, command):      #get file from server
 
 def file_transfer_put(conn, commands):       #push file to server
     send_data(conn, commands + "[END]")
-    file_name = path.basename(commands.split()[1])
+    file_name = path.basename(commands.split()[0])
     if VERBOSE:
         print_info("Trying to open: {}".format(file_name))
     f = open(file_name, 'rb')
@@ -283,7 +283,7 @@ def listen():
                 elif cmd == "1":
                     command = input("get > ")
                     if command != "back":
-                        command = "get " + command
+                        command = "[get] " + command
                         path_exists = True
                         if len(command.split()) == 1:
                             print_warn("Incomplete command") 
@@ -302,7 +302,7 @@ def listen():
                     print_info("Format - <full_path_source_name> <full_path_dest_name> ")
                     command = input("put > ")
                     if command != "back":
-                        command = "put " + command
+                        command = "[put] " + command
                         path_exists = True
                         if len(command.split()) == 1:
                             print_warn("Incomplete command") 

