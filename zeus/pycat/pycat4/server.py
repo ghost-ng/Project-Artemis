@@ -133,7 +133,7 @@ def file_transfer_get(conn, command):      #get file from server
 
 def file_transfer_put(conn, commands):       #push file to server
     send_data(conn, commands + "[END]")
-    file_name = commands.split()[1]
+    file_name = commands.split()[0]
     if VERBOSE:
         print_info("Trying to open: {}".format(file_name))
     f = open(file_name, 'rb')
@@ -298,6 +298,9 @@ def listen():
                             else:
                                 print_warn("Destination file path does not exist")
                     cmd = ""
+##################
+#UPLOAD FILE     #
+##################                
                 elif cmd == "2":
                     print_info("Format - <full_path_source_name> <full_path_dest_name> ")
                     command = input("put > ")
