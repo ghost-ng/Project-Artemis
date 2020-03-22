@@ -150,6 +150,7 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
     f.close()
 
 def file_transfer_put(conn, file_name):     #download from server - response from a 'put'
+    file_name = file_name.rstrip("[END]")
     f = open(file_name,'wb')
     if VERBOSE:
         print_info("Receiving --> {}".format(file_name))
