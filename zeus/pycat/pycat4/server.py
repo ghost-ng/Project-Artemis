@@ -305,21 +305,19 @@ def listen():
                     print_info("Format - <full_path_source_name> <full_path_dest_name> ")
                     command = input("put > ")
                     if command != "back":
-                        command = "[put] " + command
                         path_exists = True
-                        if len(command.split()) == 1:
-                            print_warn("Incomplete command") 
-                        elif len(command.split()) == 2:      #put example
-                            if path.isfile(command.split()[1]):
-                                command = "[put]" + command.split()[1] + " " + path.basename(command.split()[1])
+                        if len(command.split()) == 1:      #example_file
+                            if path.isfile(command.split()[0]):
+                                upload = "[put] " + command.split()[0] + " " + path.basename(command.split()[0])
                                 if VERBOSE:
                                     print_info("Uploading --> {}".format(command))
-                                file_transfer_put(conn, command)
+                                file_transfer_put(conn, upload)
                             else:
                                 print_warn("File not Found")
-                        elif len(command.split())== 3:        #put example temp  [writes example as temp]
+                        elif len(command.split())== 2:        #example temp  [writes example as temp]
                             if path.isfile(command.split()[1]):
-                                file_transfer_put(conn, command)   #(example, temp)  client will determine if arg2 destination filepath exists
+                                upload = "[put] " + command
+                                file_transfer_put(conn, upload)   #(example, temp)  client will determine if arg2 destination filepath exists
                             else:
                                 print_warn("Unable to locate file")
                     cmd = ""
