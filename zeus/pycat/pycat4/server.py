@@ -297,6 +297,7 @@ def listen():
                                 print_warn("Destination file path does not exist")
                     cmd = ""
                 elif cmd == "2":
+                    print_info("Format - <full_path_source_name> <full_path_dest_name> ")
                     command = input("put > ")
                     if command != "back":
                         command = "put " + command
