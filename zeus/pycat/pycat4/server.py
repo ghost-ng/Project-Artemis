@@ -133,7 +133,7 @@ def file_transfer_get(conn, command):      #get file from server
 
 def file_transfer_put(conn, commands):       #push file to server
     send_data(conn, commands + "[END]")
-    file_name = commands.split()[0]
+    file_name = commands.split()[1]
     if VERBOSE:
         print_info("Trying to open: {}".format(file_name))
     f = open(file_name, 'rb')
@@ -311,7 +311,7 @@ def listen():
                             print_warn("Incomplete command") 
                         elif len(command.split()) == 2:      #put example
                             if path.isfile(command.split()[1]):
-                                command = command.split()[1] + " " + path.basename(command.split()[1])
+                                command = "[put]" + command.split()[1] + " " + path.basename(command.split()[1])
                                 if VERBOSE:
                                     print_info("Uploading --> {}".format(command))
                                 file_transfer_put(conn, command)
