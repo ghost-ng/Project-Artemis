@@ -338,6 +338,7 @@ def listen():
                 elif cmd == "6":
                     uuid = get_uuid(conn)
                     print_good("Found UUID: {}".format(uuid))
+                    cmd = ""
                 elif cmd.lower() == "shell":
                     while cmd.lower() == "shell":
                         command = input("shell > ")
