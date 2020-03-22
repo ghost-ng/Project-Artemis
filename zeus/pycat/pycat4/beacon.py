@@ -1,18 +1,12 @@
 from printlib import *
 from os import kill, getpid
 from signal import SIGTERM
+import tasker
 
 def configure(conn):
     query(conn)
-    ans = print_question_list("Set up a Beacon Task", "1 - Current Session", "2 - Future Tasking")
-    if ans == "1":
-        try:
-            int(ans)
-            send_data(conn, "[BEACON]{}".format(ans))
-        except:
-            print("Error: No change")
-    elif ans == "2":
-        
+    ans = print_question_list("New Beacon Interval (sec)")
+    send_data(conn, "[BEACON]{}".format(ans))
 
 def query(conn):
     send_data(conn, "[BEACON]?")

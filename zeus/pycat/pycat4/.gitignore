@@ -1,6 +1,5 @@
 *key
 *cert*
-shellcode
-payload.py
 *.exe
 *pycache*
+output
