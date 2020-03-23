@@ -268,6 +268,10 @@ def listen():
                         listen_for_data(conn)
                     conn.shutdown(socket.SHUT_RDWR)
                     conn.close()
+                else:
+                    print_warn("UUID check failed.  Skipping Task File")
+                    conn.shutdown(socket.SHUT_RDWR)
+                    conn.close()
             while True:
                 if run_tasks is True:
                     break
