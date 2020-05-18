@@ -5,7 +5,7 @@ import importlib
 from time import time, sleep
 from os import remove, path, getpid, kill, getlogin, name
 from datetime import datetime
-from sys import exit, builtin_module_names
+from sys import exit
 from signal import SIGTERM
 from random import randint, uniform
 
@@ -315,7 +315,7 @@ def beacon_drift(value):
 
 def main ():
     global BEACON_INTERVAL_SETTING
-    if 'nt' in builtin_module_names:
+    if name == "nt":
         query_beacon()
 
     while True:
