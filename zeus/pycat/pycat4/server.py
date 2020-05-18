@@ -208,7 +208,7 @@ def get_uuid(conn):
         print_info("Asking for UUID")
     send_data(conn,"[UUID]")
     uuid = listen_for_data(conn, "store")
-    if len(uuid) != 32:
+    if len(uuid) != 36:
         return False
     else:
         return uuid
