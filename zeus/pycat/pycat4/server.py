@@ -116,8 +116,8 @@ def file_transfer_get(conn, command):      #get file from server
     f = open(dest_filename,'wb')
     print_info("Grabbing {} --> {}".format(command.split()[1], dest_filename))
     while True: 
-        data = conn.recv(128)
-        if b"FILE_NOT_FOUND" in data:
+        data = conn.recv(1024)
+        if b"####FILE_#NOT#_FOUND####" in data:
             print_fail("File not found")
             f.close()
             remove(dest_filename)
