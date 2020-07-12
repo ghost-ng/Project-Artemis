@@ -110,7 +110,8 @@ def send_data(s, plain_text):
     print_info("Sent:\n" +plain_text)
 
 def file_transfer_get(conn, command):      #get file from server
-    send_data(conn, command + "[END]")
+    new_cmd = " ".join(command.split()[:2])
+    send_data(conn, new_cmd + "[END]")
     file = command.split()
     dest_filename = file[2]
     f = open(dest_filename,'wb')
@@ -295,7 +296,7 @@ def listen():
                         if len(command.split()) == 1:
                             print_warn("Incomplete command") 
                         elif len(command.split())== 2:
-                            command = command + " " + command.split()[1]
+                            command = command + " " + path.basename(command.split()[1])
                             file_transfer_get(conn, command)
                         elif len(command.split())== 3:
                             if path.dirname(command.split()[2]) != "":
