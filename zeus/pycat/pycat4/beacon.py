@@ -8,6 +8,16 @@ def configure(conn):
     ans = print_question_list("New Beacon Interval (sec)")
     send_data(conn, "[BEACON]{}".format(ans))
 
+def change_port(conn):
+    ans = print_question_list("Select Option","1 - Query Callback Port Config","2 - Set Callback Port")
+    if ans == "1":
+        send_data(conn, "[PORT]?")
+        print_info("Current Callback Port:")
+        recv_data(conn)
+    elif ans == "2":
+        ans = print_question("Enter new callback port")
+        send_data(conn, "[PORT]{}".format(ans))
+
 def query(conn):
     send_data(conn, "[BEACON]?")
     print_info("Current Setting (sec):")

