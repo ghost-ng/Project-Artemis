@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import socket, platform, ssl, subprocess
 from printlib import *
-import importlib
+from importlib import util
 from time import time, sleep
 from os import remove, path, getpid, kill, getlogin, name
 from datetime import datetime
@@ -26,7 +26,7 @@ BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
 
 try:
     if name  == "nt":
-        winreg_exists = importlib.util.find_spec('winreg')
+        winreg_exists = util.find_spec('winreg')
         if winreg_exists:
             import winreg
 except:
