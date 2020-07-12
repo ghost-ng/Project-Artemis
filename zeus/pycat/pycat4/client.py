@@ -278,7 +278,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     while True:
         data = ""
         while not data.endswith('[END]'):
-            if len(sock_desc_tracker) == 30:
+            if len(sock_desc_tracker) == 20:
                 if len(set(sock_desc_tracker)) == 1:
                     if VERBOSE:
                         print_fail("Lost Connection --> Count: {}".format(len(sock_desc_tracker)))

