@@ -275,7 +275,7 @@ def listen():
                     conn.close()
                 else:
                     print_warn("UUID check failed.  Skipping Task File")
-                    print_warn("Presented UUID: {}".format(uuid)
+                    print_warn("Presented UUID: {}".format(uuid))
                     conn.shutdown(socket.SHUT_RDWR)
                     conn.close()
             while True:
