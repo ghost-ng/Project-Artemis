@@ -10,6 +10,7 @@ from datetime import datetime
 from sys import exit,exc_info
 from signal import SIGTERM
 from random import randint, uniform, choice
+import argparse
 
 
     
@@ -385,6 +386,16 @@ def beacon_drift(value=30):
 
 def main ():
     global BEACON_INTERVAL_SETTING
+    global remote_port
+    global remote_ip
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument('-p', action='store', dest='remote_port',
+                            help='Remote Port',default=remote_port)
+    parser.add_argument('-i', action='store', dest='remote_ip',
+                            help='Remote IP',default=remote_ip)
+    args = parser.parse_args()
+    remote_ip = args.remote_ip
+    remote_port = int(args.remote_port)
     if name == "nt":
         query_beacon()
 
