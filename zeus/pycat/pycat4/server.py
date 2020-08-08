@@ -421,7 +421,7 @@ def main ():
                             help='Listening IP',default=listen_addr)
     args = parser.parse_args()
     listen_addr = args.interface
-    listen_port = args.port
+    listen_port = int(args.port)
     try:
         create_keys()
         listen()
