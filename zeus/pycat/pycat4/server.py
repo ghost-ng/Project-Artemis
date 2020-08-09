@@ -412,11 +412,9 @@ def listen():
                     cmd = ""
 
         except KeyboardInterrupt:
-            kill_session(conn, source)
+            beacon.start_beaconing(conn)
         except ssl.SSLError:
             print_fail("Received Connection From Malformed (SSL) Session")
-        except KeyboardInterrupt:
-            kill_session(conn, source)
         except ConnectionAbortedError:
             print_warn("Lost Connection")
 
