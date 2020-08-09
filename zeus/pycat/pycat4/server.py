@@ -256,8 +256,13 @@ def listen():
                 raise KeyboardInterrupt
         except KeyboardInterrupt:
             print_warn("punt")
-            newsocket.shutdown(socket.SHUT_RDWR)
-            newsocket.close()
+            try:
+                newsocket.shutdown(socket.SHUT_RDWR)
+                newsocket.close()
+                bindsocket.shutdown(socket.SHUT_RDWR)
+                bindsocket.close()
+            except:
+                pass
             exit()
         print_good("Client connected: {}:{}".format(fromaddr[0], fromaddr[1]))
         try:
