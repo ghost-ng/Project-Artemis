@@ -295,8 +295,9 @@ def listen():
                 #print(command)
 
                 if cmd == 'quit' or cmd == 'exit':
+                    conn.shutdown(socket.SHUT_RDWR)
                     conn.close()
-                    exit()
+                    exit(1)
                 elif cmd == "1":
                     command = input("get > ")
                     if command != "back":
