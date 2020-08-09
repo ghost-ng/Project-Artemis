@@ -210,6 +210,7 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
     except:
         if VERBOSE:
             print_fail("IO Error - Unable to Write File from Server")
+            send_data(conn, "INVALID DESTINATION PATH")
 
 def beacon(conn, data):
     global BEACON_INTERVAL_SETTING

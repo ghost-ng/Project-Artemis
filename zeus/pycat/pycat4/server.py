@@ -413,6 +413,8 @@ def listen():
 
         except KeyboardInterrupt:
             beacon.start_beaconing(conn)
+            conn.shutdown(socket.SHUT_RDWR)
+            conn.close()
         except ssl.SSLError:
             print_fail("Received Connection From Malformed (SSL) Session")
         except ConnectionAbortedError:
