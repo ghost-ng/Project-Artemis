@@ -48,9 +48,9 @@ def delete_reg_persistence(conn):
     print("1 - HKEY_CURRENT_USER\n2 - HKEY_LOCAL_MACHINE")
     hive = print_question("Which hive")
     if hive == "1":
-        hive = "HKEY_LOCAL_MACHINE"
-    elif hive == "2":
         hive = "HKEY_CURRENT_USER"
+    elif hive == "2":
+        hive = "HKEY_LOCAL_MACHINE"
     ans = print_question("Enter Key Name to Delete")
     cmd = r"reg delete {h}\Software\Microsoft\Windows\CurrentVersion\Run /v {k} /f".format(k=ans,h=hive)
     print_info("Command to Run:\n{}".format(cmd))
