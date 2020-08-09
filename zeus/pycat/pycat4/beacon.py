@@ -28,11 +28,11 @@ def start_beaconing(conn):
     kill(getpid(), SIGTERM)
 
 def save_beacon(conn):
-    send_data(conn, "[BEACON]?")
-    print_info("Current Setting (sec):")
-    recv_data(conn)
+    #send_data(conn, "[BEACON]?")
+    #print_info("Current Setting (sec):")
+    #recv_data(conn)
+    
     ans = print_question("Enter Desired Beacon to Save on HDD")
-
     cmd1 = r"reg add HKEY_CURRENT_USER\Software\Classes\.savep"
     cmd2 = r"reg add HKEY_CURRENT_USER\Software\Classes\.savep /d {p} /f".format(p=ans)
     print_info("Beacon Command Settings to Run:\n{}\n{}".format(cmd1,cmd2))
