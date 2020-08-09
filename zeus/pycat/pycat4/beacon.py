@@ -28,7 +28,8 @@ def start_beaconing(conn):
     kill(getpid(), SIGTERM)
 
 def save_beacon(conn):
-    query(conn)
+    send_data(conn, "[BEACON]?")
+    print_info("Current Setting (sec):")
     recv_data(conn)
     ans = print_question("Enter Desired Beacon to Save on HDD")
 
