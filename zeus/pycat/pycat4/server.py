@@ -333,12 +333,12 @@ def listen():
                             else:
                                 print_warn("File not Found")
                         elif len(command.split())== 2:        #example temp  [writes example as temp]
-                            if path.isfile(command.split()[1]):
+                            if path.isfile(command.split()[0]):
                                 upload = "[put] " + command
                                 file_transfer_put(conn, upload)   #(example, temp)  client will determine if arg2 destination filepath exists
                             else:
                                 print_warn("Unable to locate file")
-                                print(path.isfile(command.split()[1]))
+                                #print(path.isfile(command.split()[0]))
                     cmd = ""
                 elif cmd == "3": # If we got terminate command, inform the client and close the connect and break the loop
                     kill_session(conn, source)
