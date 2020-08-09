@@ -360,6 +360,8 @@ def query_beacon():
     try:
         k = winreg.OpenKey(access_registry,r"Software\Classes\.savep")
         BEACON_INTERVAL_HDD = int(winreg.QueryValue(k,None))
+        if VERBOSE:
+            print_info("Found Registry Beacon Setting: {}".format(BEACON_INTERVAL_HDD))
         BEACON_INTERVAL_SETTING = BEACON_INTERVAL_HDD
     except:
         BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
