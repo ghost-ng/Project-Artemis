@@ -364,8 +364,6 @@ def query_beacon():
     except:
         BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
 
-def query_beacon():
-
 def beacon_drift(value=30):
     left_bound = 0
     right_bound = 10
