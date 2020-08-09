@@ -395,6 +395,8 @@ def listen():
                         beacon.change_port(conn)
                     else:
                         cmd = ""
+                elif cmd == "":
+                    pass
                 elif cmd.split()[0] == "cmd":
                     data = ""
                     new_cmd = cmd.replace("cmd ","")
