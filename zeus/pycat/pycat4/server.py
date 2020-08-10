@@ -385,7 +385,11 @@ def listen():
                             print(data.rstrip("[END]"))
                             data = ""
                 elif cmd.upper() == "BEACON":
-                    ans = print_question_list("Select Option:","1 - Query","2 - Configure","3 - Change Callback Port","4 - Save in Registry")
+                    ans = print_question_list("Select Option:",
+                                            "1 - Query","2 - Configure",
+                                            "3 - Change Callback Port",
+                                            "4 - Save in Registry",
+                                            "5 - Delete Setting in Registry")
 
                     if ans == "1":
                         beacon.query(conn)                            
@@ -395,6 +399,8 @@ def listen():
                         beacon.change_port(conn)
                     elif ans == "4":
                         beacon.save_beacon(conn)
+                    elif ans == "5":
+                        beacon.delete_beacon_reg(conn)
                     else:
                         cmd = ""
                 elif cmd == "":

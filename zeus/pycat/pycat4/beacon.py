@@ -45,6 +45,11 @@ def save_beacon(conn):
         send_data(conn, cmd2)
         recv_data(conn)
 
+def delete_beacon_reg(conn):
+    print_info("Removing Registry Setting")
+    cmd = r"reg delete HKEY_CURRENT_USER\Software\Classes\.savep /f"
+    send_data(conn, cmd)
+    recv_data(conn)
 
 def send_data(s, plain_text):
     msg = plain_text + "[END]"
