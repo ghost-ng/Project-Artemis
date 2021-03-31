@@ -236,8 +236,9 @@ def get_working_dir(conn):
     CURRENT_WORKING_DIR = listen_for_data(conn,'store')
 
 def change_working_dir(conn, path):
+    global CURRENT_WORKING_DIR
     send_data(conn, "[cwd] {}".format(path))
-    get_working_dir(conn)
+    CURRENT_WORKING_DIR = listen_for_data(conn,'store')
 
 def listen():
     global conn
