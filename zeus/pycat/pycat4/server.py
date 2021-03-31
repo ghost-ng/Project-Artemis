@@ -4,12 +4,25 @@ import argparse
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
 from printlib import *
 from os import path, remove, kill, getpid, listdir
-from sys import exit, argv
+from sys import exit, argv,exc_info
 from sys import path as sys_path
 from signal import SIGTERM
 import tasker
 
 VERBOSE = True
+
+
+#IGNORE SSL CHECKS
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    # Legacy Python that doesn't verify HTTPS certificates by default
+    pass
+else:
+    # Handle target environment that doesn't support HTTPS verification
+    ssl._create_default_https_context = _create_unverified_https_context
+
 
 listen_addr = '0.0.0.0'
 listen_port = 8081
@@ -215,6 +228,9 @@ def get_uuid(conn):
     else:
         return uuid
 
+
+
+
 def listen():
     global conn
 
@@ -229,7 +245,7 @@ def listen():
     beacon - Change Beacon Settings"""
 
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    context.verify_mode = ssl.CERT_REQUIRED
+    #context.verify_mode = ssl.CERT_REQUIRED
     context.load_cert_chain(certfile='server_cert', keyfile='server_key')
     context.load_verify_locations(cafile='client_certs')
     #delete_keys()
@@ -425,8 +441,10 @@ def listen():
             beacon.start_beaconing(conn)
             conn.shutdown(socket.SHUT_RDWR)
             conn.close()
-        except ssl.SSLError:
-            print_fail("Received Connection From Malformed (SSL) Session")
+        except Exception as e:
+            print_fail("SSL Error")
+            print(e)
+            print(exc_info)
         except ConnectionAbortedError:
             print_warn("Lost Connection")
 
