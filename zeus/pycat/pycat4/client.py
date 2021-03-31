@@ -288,6 +288,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         if VERBOSE:
             print_good("Connected!")
             print_good("SSL established. Peer: {}".format(conn.getpeercert()))
+        get_cwd()
     except ConnectionRefusedError:
         raise ConnectionRefusedError
     except Exception as e:
