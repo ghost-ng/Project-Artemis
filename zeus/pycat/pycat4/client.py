@@ -12,7 +12,16 @@ from random import randint, uniform, choice
 import argparse
 
 
-    
+#IGNORE SSL CHECKS
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    # Legacy Python that doesn't verify HTTPS certificates by default
+    pass
+else:
+    # Handle target environment that doesn't support HTTPS verification
+    ssl._create_default_https_context = _create_unverified_https_context
 
 UUID = "c60a59df-c3e1-11ea-a17a-bc14ef68ef25"   #python -c 'import uuid; print(uuid.uuid1())'
 remote_ip = '10.0.0.109'
