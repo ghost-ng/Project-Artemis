@@ -495,6 +495,4 @@ def main ():
     finally:
         delete_keys()
 
-if len(argv) == 2:
-    listen_port = int(argv[1])
 main()
