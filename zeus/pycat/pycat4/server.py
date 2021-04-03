@@ -12,7 +12,7 @@ import tasker
 VERBOSE = True
 DEBUG = True
 CURRENT_WORKING_DIR = ""
-
+TASK_FILES_LOCATION = "tasks"
 #IGNORE SSL CHECKS
 
 try:
@@ -179,9 +179,11 @@ def kill_session(conn, source):
     send_data(conn, "[kill]")
     conn.close()
 
+
+
 def query_for_tasklist(machine_addr):
     try:
-        task_files = listdir('tasks')
+        task_files = listdir(TASK_FILES_LOCATION)
         if machine_addr in task_files:
             if VERBOSE:
                 print_info("Found a task file")
@@ -262,7 +264,7 @@ def listen():
     bindsocket = socket.socket()
     bindsocket.bind((listen_addr, listen_port))
     bindsocket.listen(1)
-    if listdir("tasks") != []:
+    if listdir(TASK_FILES_LOCATION) != []:
         ans = print_question("Found Task Files, Run y/[n]")
         if ans != "y":
             run_tasks = False
@@ -471,6 +473,7 @@ def listen():
             print_warn("Lost Connection")
 
 def main ():
+    global TASK_FILES_LOCATION
     global listen_port
     global listen_addr
     parser = argparse.ArgumentParser(description="Pycat Server")
@@ -478,9 +481,14 @@ def main ():
                             help='Listening Port',default=listen_port)
     parser.add_argument('-i', action='store', dest='interface',
                             help='Listening IP',default=listen_addr)
+    parser.add_argument('--tasks', action='store', dest='task_folder',default=TASK_FILES_LOCATION
+                            help='Task Folder',default=listen_addr)
     args = parser.parse_args()
     listen_addr = args.interface
     listen_port = int(args.port)
+    task_folder = args.task_folder
+    if path.isdir(task_folder):
+        TASK_FILES_LOCATION = args.task_folder
     try:
         create_keys()
         listen()
