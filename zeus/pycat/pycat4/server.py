@@ -481,7 +481,7 @@ def main ():
                             help='Listening Port',default=listen_port)
     parser.add_argument('-i', action='store', dest='interface',
                             help='Listening IP',default=listen_addr)
-    parser.add_argument('--tasks', action='store', dest='task_folder',default=TASK_FILES_LOCATION
+    parser.add_argument('--tasks', action='store', dest='task_folder',default=TASK_FILES_LOCATION,
                             help='Task Folder',default=listen_addr)
     args = parser.parse_args()
     listen_addr = args.interface
