@@ -466,9 +466,8 @@ def listen():
             conn.shutdown(socket.SHUT_RDWR)
             conn.close()
         except Exception as e:
-            print_fail("SSL Error")
             print(e)
-            #print(exc_info)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         except ConnectionAbortedError:
             print_warn("Lost Connection")
 
