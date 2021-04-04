@@ -422,7 +422,7 @@ def listen():
                                 recv = conn.recv(128)
                                 try:
                                     recv_decoded = recv.decode('utf-8')
-                                except UnicodeDecodeError;
+                                except UnicodeDecodeError:
                                     recv_decoded = recv.decode('cp1252')
                                 data = data + recv_decoded
                             print(data.rstrip("[END]"))
