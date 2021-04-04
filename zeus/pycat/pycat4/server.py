@@ -420,7 +420,10 @@ def listen():
                                 print_info("Waiting for data...")
                             while not data.endswith('[END]'):
                                 recv = conn.recv(128)
-                                recv_decoded = recv.decode('utf-8')
+                                try:
+                                    recv_decoded = recv.decode('utf-8')
+                                except UnicodeDecodeError;
+                                    recv_decoded = recv.decode('cp1252')
                                 data = data + recv_decoded
                             print(data.rstrip("[END]"))
                             data = ""
