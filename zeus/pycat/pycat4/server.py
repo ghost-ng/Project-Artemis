@@ -317,7 +317,7 @@ def listen():
             while True:
                 if run_tasks is True:
                     break
-                prompt = source + "> "
+                prompt = RED + source + "> " + RSTCOLORS
                 if cmd == "":
                     print(options)
                     cmd = input(prompt) # Get user input and store it in command variable
@@ -395,7 +395,7 @@ def listen():
                 elif cmd.lower() == "shell":
                     while cmd.lower() == "shell":
                         prompt = CURRENT_WORKING_DIR + ">"
-                        command = input(printlib.RED + prompt + printlib.RSTCOLORS)
+                        command = input(RED + prompt + RSTCOLORS)
                         forbidden = ['get ', 'get', 'put ', 'put']
                         for item in forbidden:
                             if item in command.split():
