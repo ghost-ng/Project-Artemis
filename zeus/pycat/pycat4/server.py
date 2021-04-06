@@ -264,15 +264,17 @@ def listen():
     bindsocket = socket.socket()
     bindsocket.bind((listen_addr, listen_port))
     bindsocket.listen(1)
-    if listdir(TASK_FILES_LOCATION) != []:
-        ans = print_question("Found Task Files, Run y/[n]")
-        if ans != "y":
-            run_tasks = False
+    try:
+        if listdir(TASK_FILES_LOCATION) != []:
+            ans = print_question("Found Task Files, Run y/[n]")
+            if ans != "y":
+                run_tasks = False
+            else:
+                run_tasks = True
         else:
-            run_tasks = True
-    else:
+            run_tasks = False
+    except:
         run_tasks = False
-
     while True:
         try:
             if run_tasks == True and VERBOSE is True:
