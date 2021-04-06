@@ -1,4 +1,10 @@
 #!/usr/bin/python3
+
+import os
+abspath = os.path.abspath(sys.argv[0])
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
 import socket, ssl, persist, beacon
 import argparse
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
