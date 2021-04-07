@@ -236,14 +236,32 @@ def delete_task_file(task_file_name):
         pass
 
 def run_initial_survey(conn):
-    print("=============================")
     uuid = get_uuid(conn)
-    print(BLUE + "UUID: " + uuid + RSTCOLORS)
+    time = get_time(conn)
     get_working_dir(conn)
+    username = get_username(conn)
+    print("=============================")
+    print(BLUE + "UUID: " + uuid + RSTCOLORS)
     print(BLUE + "Connection From: " + CONNECTED_HOST + RSTCOLORS)
     print(BLUE + "Working Dir: " + CURRENT_WORKING_DIR + RSTCOLORS)
+    print(BLUE + "System Time: " + time)
+    print(BLUE + "Username: " + username)
     print("=============================")
     print()
+
+def get_time(conn):
+    if DEBUG:
+        print_info("Asking for Local System Time")
+    send_data(conn,"[time]")
+    time = listen_for_data(conn, "store")
+    return time
+
+def get_username(conn):
+    if DEBUG:
+        print_info("Asking for Username")
+    send_data(conn,"[user]")
+    username = listen_for_data(conn, "store")
+    return username
 
 def get_uuid(conn):
     if DEBUG:

