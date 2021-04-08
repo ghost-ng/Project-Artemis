@@ -143,7 +143,7 @@ def file_transfer_get(conn, command):      #get file from server
         data = base64_decode(conn.recv(1024).decode())
         if DEBUG:
             print(data)
-        if b"####FILE_#NOT#_FOUND####" in data:
+        if "####FILE_#NOT#_FOUND####" in data:
             print_fail("File not found")
             f.close()
             remove(dest_filename)
@@ -242,6 +242,7 @@ def run_initial_survey(conn):
     time = get_time(conn)
     get_working_dir(conn)
     username = get_username(conn)
+    print()
     print(WHITE + "=============================")
     print("UUID: " + uuid)
     print("Connection From: " + CONNECTED_HOST)
