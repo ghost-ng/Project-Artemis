@@ -176,6 +176,7 @@ def listen_for_data(conn, mode="print"):
     if DEBUG:
         print_info("Waiting for data")
     data = ""
+    data_b64 = ""
     while not data.endswith('[END]'):
         recv = conn.recv(128)
         recv_decoded = recv.decode('utf-8')
