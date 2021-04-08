@@ -186,7 +186,7 @@ def listen_for_data(conn, mode="print"):
 
     if DEBUG:
         print(data_b64)
-        
+
     if mode != "print":
         return data.rstrip("[END]")
     else:
@@ -406,7 +406,7 @@ def listen():
 ##################
 #UPLOAD FILE     #
 ##################                
-                elif cmd == "put" cmd == "2":
+                elif cmd == "put" or cmd == "2":
                     print_info("Format - <full_path_source_name> <full_path_dest_name> ")
                     command = input("put > ")
                     if command != "back":
