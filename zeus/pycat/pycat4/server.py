@@ -16,7 +16,7 @@ from signal import SIGTERM
 import tasker,base64
 
 VERBOSE = True
-DEBUG = False
+DEBUG = True
 CURRENT_WORKING_DIR = ""
 TASK_FILES_LOCATION = "tasks"
 CONNECTED_HOST = None
