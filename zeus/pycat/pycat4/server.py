@@ -141,6 +141,7 @@ def file_transfer_get(conn, command):      #get file from server
     print_info("Grabbing {} --> {}".format(command.split()[1], dest_filename))
     while True: 
         data = conn.recv(1024)
+        print(data.decode())
         if b"####FILE_#NOT#_FOUND####" in data:
             print_fail("File not found")
             f.close()
@@ -240,13 +241,13 @@ def run_initial_survey(conn):
     time = get_time(conn)
     get_working_dir(conn)
     username = get_username(conn)
-    print("=============================")
-    print(BLUE + "UUID: " + uuid + RSTCOLORS)
-    print(BLUE + "Connection From: " + CONNECTED_HOST + RSTCOLORS)
-    print(BLUE + "Working Dir: " + CURRENT_WORKING_DIR + RSTCOLORS)
-    print(BLUE + "System Time: " + time)
-    print(BLUE + "Username: " + username)
-    print("=============================")
+    print(WHITE + "=============================")
+    print("UUID: " + uuid)
+    print("Connection From: " + CONNECTED_HOST)
+    print("Working Dir: " + CURRENT_WORKING_DIR)
+    print("System Time: " + time)
+    print("Username: " + username)
+    print("=============================" + RSTCOLORS)
     print()
 
 def get_time(conn):
