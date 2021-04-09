@@ -207,7 +207,10 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
     if VERBOSE:
         print_info("Sending File:\n" + file_name)
     while data:
-        conn.send(base64_encode(data))
+        b64_data = base64_encode(data)
+        if DEBUG:
+            print(b64_data)
+        conn.send(b64_data)
         data = f.read(1024)
     conn.send("[END]".encode('utf-8'))
     if VERBOSE:
