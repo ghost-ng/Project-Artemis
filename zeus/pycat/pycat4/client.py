@@ -26,8 +26,8 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 
 UUID = "c60a59df-c3e1-11ea-a17a-bc14ef68ef25"   #python -c 'import uuid; print(uuid.uuid1())'
-remote_ip = '10.0.0.109'
-remote_port = 8081
+remote_ip = '10.0.0.4'
+remote_port = 18082
 server_sni_hostname = ''
 VERBOSE = True
 DEBUG = True
@@ -370,11 +370,14 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     print_info("Received GET")
                 file_name = data.split()[1].strip("[END]")
                 if path.exists(file_name):
+                    if VERBOSE:
+                        print_info("File Found! :) --> {}".format(file_name))
+                    send_data(conn, "[file-found]]")
                     file_transfer_get(conn, file_name)
                 else:
                     if VERBOSE:
-                        print_info("File not Found --> {}".format(file_name))
-                    send_data(conn, "####FILE_#NOT#_FOUND####")
+                        print_info("File not Found :( --> {}".format(file_name))
+                    send_data(conn, "[file-not-found]")
                 data = ""
             elif "[put]" in data:
                 if VERBOSE:
