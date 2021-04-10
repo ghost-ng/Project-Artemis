@@ -178,14 +178,18 @@ node: {}""".format(getpid(),getlogin(),date_time,platform.system(),platform.rele
 
 def base64_encode(message):
     try:
-        message_bytes = message.encode('ascii')
+        if type(message) is not bytes:
+            message_bytes = message.encode('ascii')
+        else:
+            message_bytes = message.decode().encode('ascii')
         base64_bytes = base64.b64encode(message_bytes)
         base64_message = base64_bytes.decode('ascii')
+        return base64_message
     except Exception as e:
         if VERBOSE:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
-    return base64_message
+    
 
 def send_data(conn, plain_text):
     if type(plain_text) is int:
