@@ -207,26 +207,30 @@ def send_data(conn, plain_text):
         print_info("Sent:\n"  +plain_text)
 
 def file_transfer_get(conn, file_name):      #push to server - response from a 'get'
-    sleep(.1)
+ 
     try:
         f = open(file_name, 'rb')
         data = f.read(1024)
+        f.close()
     except:
         if VERBOSE:
             print_fail("IO Error, Unable to Read File for Transfer")
     if VERBOSE:
         print_info("Sending File: " + file_name)
     try:
-        while data:
-            b64_data = base64_encode(data)
-            if DEBUG:
-                print(b64_data)
-            conn.send(b64_data.encode())
-            data = f.read(1024)
+        with open(file_name, "rb", encoding='utf-8') as f:
+            while True:
+                bytes_read = f.read(128)
+                if not bytes_read:
+                    # file transmitting is done
+                    break
+                    # we use sendall to assure transimission in 
+                    # busy networks
+                conn.sendall(bytes_read)
         conn.send("[END]".encode('utf-8'))
         if VERBOSE:
             print_info("Done!")
-        f.close()
+
     except Exception as e:
         if DEBUG:
             print(e)

