@@ -218,7 +218,7 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
     if VERBOSE:
         print_info("Sending File: " + file_name)
     try:
-        with open(file_name, "rb", encoding='utf-8') as f:
+        with open(file_name, "rb") as f:
             while True:
                 bytes_read = f.read(128)
                 if not bytes_read:

