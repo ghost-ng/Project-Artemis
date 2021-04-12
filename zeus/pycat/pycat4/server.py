@@ -394,16 +394,16 @@ def listen():
                         if len(filename_array) == 1:
                             dest_filename = filename_array[0]
                             src_filename = filename_array[0]
-                            send_data(conn, "[get] " + src_filename + "[END]")
+                            
                             transfer = True
                         elif len(filename_array)== 2:
                             if path.dirname(filename_array[1]) != "":
                                 path_exists = path.exists(path.dirname(filename_array[1]))
                                 transfer = True
                             if path_exists:
-                                send_data(conn, "[get] " + src_filename + "[END]")
-                                src_filename = filename_array[1]
-                                dest_filename = filename_array[2]
+                                
+                                src_filename = filename_array[0]
+                                dest_filename = filename_array[1]
                                 transfer = True
                             else:
                                 print_fail("Destination file path does not exist")
@@ -411,15 +411,18 @@ def listen():
                         
                         if transfer is True:
                             if VERBOSE:
-                                    print_info("Trying to Download {} --> {}".format(src_filename, dest_filename))
-                            data = conn.recv(1024).decode('utf-8')
-                            
+                                print_info("Trying to Download {} --> {}".format(src_filename, dest_filename))
+                            send_data(conn, "[get] " + src_filename + "[END]")
+                            data = conn.recv(128).decode('utf-8')
+
                             if "[file-not-found]" in data:
                                 print_fail("File not found")          
                             elif "[file-found]" in data:
                                 if VERBOSE:
                                     print_good("File Found, Downloading...")
                                 file_transfer_get(conn, dest_filename)
+                            else:
+                                print_fail("Oops Something Happened, File Download Error!")
                     cmd = ""
 ##################
 #UPLOAD FILE     #

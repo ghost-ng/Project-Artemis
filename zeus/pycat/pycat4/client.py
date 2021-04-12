@@ -396,6 +396,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     if VERBOSE:
                         print_info("File Found! :) --> {}".format(file_name))
                     send_data(conn, "[file-found]")
+                    sleep(.1)
                     file_transfer_get(conn, file_name)
                 else:
                     if VERBOSE:
