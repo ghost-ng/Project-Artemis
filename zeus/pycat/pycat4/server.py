@@ -133,6 +133,7 @@ def send_data(s, plain_text):
         print_info("Sent:\n" +plain_text)
 
 def file_transfer_get(conn, filename):      #get file from server
+    send_data(conn,"[transfer]")
     try:
         with open(filename, "wb") as f:
             while True:
@@ -413,7 +414,7 @@ def listen():
                             if VERBOSE:
                                 print_info("Trying to Download {} --> {}".format(src_filename, dest_filename))
                             send_data(conn, "[get] " + src_filename + "[END]")
-                            data = conn.recv(128).decode('utf-8')
+                            data = listen_for_data(conn,mode="store")
 
                             if "[file-not-found]" in data:
                                 print_fail("File not found")          
