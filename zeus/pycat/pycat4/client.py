@@ -399,8 +399,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     while not data.endswith('[END]'):
                         if DEBUG:
                             print("Waiting to Transfer...")
-                        recv_decoded = recv.decode('utf-8')
-                        data = data + recv_decoded
+                        data = conn.recv(128).decode('utf-8')
+                        
                     if "[transfer]" in data:
                         if VERBOSE:
                             print_info("Beginning Transfer!")
