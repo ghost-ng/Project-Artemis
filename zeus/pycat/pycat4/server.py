@@ -172,7 +172,7 @@ def file_transfer_put(conn, commands):       #push file to server
 
 def listen_for_data(conn, mode="print",encoding="b64"):
     if DEBUG:
-        print_info("Waiting for data")
+        print_info("Waiting for data...")
     data = ""
     while not data.endswith('[END]'):
         recv = conn.recv(128)
