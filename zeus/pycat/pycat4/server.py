@@ -407,8 +407,7 @@ def listen():
                                 transfer = True
                             else:
                                 print_fail("Destination file path does not exist")
-                                
-                        
+
                         if transfer is True:
                             if VERBOSE:
                                 print_info("Trying to Download {} --> {}".format(src_filename, dest_filename))

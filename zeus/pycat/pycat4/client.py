@@ -394,7 +394,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 if path.exists(file_name):
                     if VERBOSE:
                         print_info("File Found! :) --> {}".format(file_name))
-                    send_data(conn, "[file-found]")
+                    send_data(conn, "[file-found][END]")
                     data = ""
                     while not data.endswith('[END]'):
                         if DEBUG:
@@ -408,7 +408,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 else:
                     if VERBOSE:
                         print_info("File not Found :( --> {}".format(file_name))
-                    send_data(conn, "[file-not-found]")
+                    send_data(conn, "[file-not-found][END]")
                 data = ""
             elif "[put]" in data:
                 if VERBOSE:
