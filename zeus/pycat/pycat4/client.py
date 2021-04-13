@@ -207,7 +207,6 @@ def send_data(conn, plain_text):
         print_info("Sent:\n"  +plain_text)
 
 def file_transfer_get(conn, file_name):      #push to server - response from a 'get'
- 
     try:
         f = open(file_name, 'rb')
         data = f.read(1024)
@@ -401,6 +400,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                         recv_decoded = recv.decode('utf-8')
                         data = data + recv_decoded
                     if "[transfer]" in data:
+                        if VERBOSE:
+                            print_info("Beginning Transfer")
                         file_transfer_get(conn, file_name)
                 else:
                     if VERBOSE:
