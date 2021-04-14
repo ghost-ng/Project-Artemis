@@ -330,7 +330,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     delete_keys()
     s = socket(AF_INET, SOCK_STREAM)
     x = s.getsockopt( SOL_SOCKET, SO_KEEPALIVE)
-    #s.settimeout(4)
+    s.settimeout(4)
     #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #socks.set_default_proxy(socks.SOCKS5, proxy_ip, proxy_port)
     #socket.socket = socks.socksocket
@@ -340,6 +340,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         if VERBOSE:
             print_info("Trying to connect --> {}:{}".format(remote_ip,remote_port))
         conn.connect((remote_ip, remote_port))
+        
         if VERBOSE:
             print_good("Connected!")
             print_good("SSL established. Peer: {}".format(conn.getpeercert()))
@@ -355,7 +356,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         while True:
             data = ""
             while not data.endswith('[END]'):
-                if len(sock_desc_tracker) == 20:
+                if len(sock_desc_tracker) == 30:
                     if len(set(sock_desc_tracker)) == 1:
                         if VERBOSE:
                             print_fail("Lost Connection --> Count: {}".format(len(sock_desc_tracker)))
@@ -552,6 +553,7 @@ def main():
                     if VERBOSE:
                         print_info("Sleeping for {}".format(drift))
                     sleep(drift)
+                    RECONNECT_ATTEMPTS = 5
             except KeyboardInterrupt:
                 if VERBOSE:
                     print_warn("Received Keyboard Interrupt")
