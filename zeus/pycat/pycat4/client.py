@@ -330,7 +330,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     delete_keys()
     s = socket(AF_INET, SOCK_STREAM)
     x = s.getsockopt( SOL_SOCKET, SO_KEEPALIVE)
-    s.settimeout(4)
+    s.settimeout(10)
     #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #socks.set_default_proxy(socks.SOCKS5, proxy_ip, proxy_port)
     #socket.socket = socks.socksocket
