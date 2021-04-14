@@ -497,6 +497,7 @@ def beacon_drift(value=30):
 
 def main():
     global BEACON_INTERVAL_SETTING
+    global RECONNECT_ATTEMPTS
     global remote_port
     global remote_ip
     parser = argparse.ArgumentParser(description="")
