@@ -218,13 +218,9 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
         print_info("Sending File: " + file_name)
     try:
         with open(file_name, "rb") as f:
-            while True:
+            bytes_read = f.read(128)
+            while bytes_read:
                 bytes_read = f.read(128)
-                if not bytes_read:
-                    # file transmitting is done
-                    break
-                    # we use sendall to assure transimission in 
-                    # busy networks
                 conn.sendall(bytes_read)
         conn.send("[END]".encode('utf-8'))
         if VERBOSE:

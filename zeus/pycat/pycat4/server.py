@@ -136,18 +136,15 @@ def file_transfer_get(conn, filename):      #get file from server
     send_data(conn,"[transfer]")
     try:
         with open(filename, "wb") as f:
-            while True:
-                # read 1024 bytes from the socket (receive)
-                bytes_read = conn.recv(128)
-                if not bytes_read:    
-                    # nothing is received
-                    # file transmitting is done
-                    break
-                if bytes_read.endswith(b"[END]"):
-                    f.write(bytes_read.rstrip(b"[END]"))
-                    break
-                # write to the file the bytes we just received
+            bytes_read = conn.recv(128)
+            while bytes_read:
+                print_good("Transferring...")
                 f.write(bytes_read)
+                if b"[END]" not in bytes_read:
+                    bytes_read = conn.recv(128)
+                else:
+                    break
+
         if VERBOSE:
             print_good("Transfer completed")
     except Exception as e:
@@ -183,7 +180,7 @@ def listen_for_data(conn, mode="print",encoding="b64"):
             data = base64_decode(data)
 
     if DEBUG:
-        print(data)
+        print(f"DATA: {data}")
 
     if mode != "print":
         return data.rstrip("[END]")
@@ -413,10 +410,11 @@ def listen():
                                 print_info("Trying to Download {} --> {}".format(src_filename, dest_filename))
                             send_data(conn, "[get] " + src_filename + "[END]")
                             data = listen_for_data(conn,mode="store")
-
-                            if "[file-not-found]" in data:
+                            if DEBUG:
+                                print(f"DATA: {data}")
+                            if "file-not-found" in data:
                                 print_fail("File not found")          
-                            elif "[file-found]" in data:
+                            elif "file-found" in data:
                                 if VERBOSE:
                                     print_good("File Found, Downloading...")
                                 file_transfer_get(conn, dest_filename)
