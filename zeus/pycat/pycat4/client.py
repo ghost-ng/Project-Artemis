@@ -220,8 +220,8 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
         with open(file_name, "rb") as f:
             bytes_read = f.read(128)
             while bytes_read:
-                bytes_read = f.read(128)
                 conn.sendall(bytes_read)
+                bytes_read = f.read(128)
         conn.send("[END]".encode('utf-8'))
         if VERBOSE:
             print_info("Done!")
