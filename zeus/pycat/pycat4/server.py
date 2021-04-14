@@ -134,16 +134,18 @@ def send_data(s, plain_text):
 
 def file_transfer_get(conn, filename):      #get file from server
     send_data(conn,"[transfer]")
+    bytes_read = conn.recv(128)
     try:
         with open(filename, "wb") as f:
             while True:
-                bytes_read = conn.recv(128)
                 print_info("Transferring...")
-                f.write(bytes_read)
-                if bytes_read == b"[END]" not in bytes_read:
+                if bytes_read == b"[END]":
                     if VERBOSE:
                         print_good("Transfer completed")
                     break
+                else:
+                    f.write(bytes_read)
+                    bytes_read = conn.recv(128)
 
     except Exception as e:
             print(exc_info())

