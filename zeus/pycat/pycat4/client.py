@@ -38,7 +38,7 @@ BEACON_INTERVAL_HDD = None
 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
 CURRENT_WORKING_DIR = getcwd()
 RECONNECT_ATTEMPTS = 5 #immediately upon disconnect
-s = None
+s = socket(AF_INET, SOCK_STREAM)
 
 try:
     if name  == "nt":
