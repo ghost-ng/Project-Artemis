@@ -173,9 +173,9 @@ def listen_for_data(conn, mode="print",encoding="b64"):
         recv_total = ""
         recv_data = conn.recv(128).decode('utf-8')
         if encoding == "b64":
-            recv_total = recv_total + base64_decode(recv_data)
+            recv_total = base64_decode(recv_data)
         else:
-            recv_total = recv_total + recv_data
+            recv_total = recv_data
         while '[END]' not in recv_total:
             print(f"Received: {recv_total}")              
             if encoding == "b64":

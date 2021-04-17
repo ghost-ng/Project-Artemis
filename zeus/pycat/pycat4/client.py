@@ -197,9 +197,9 @@ def send_data(conn, plain_text):
         plain_text = str(plain_text)
     msg = plain_text
     try:
-        base64_msg = base64_encode(msg)
+        base64_msg = base64_encode(msg + "[END]")
         conn.send(base64_msg.encode('utf-8'))
-        conn.send(b"[END]")
+
     except Exception as e:
         if VERBOSE:
             print(e)
