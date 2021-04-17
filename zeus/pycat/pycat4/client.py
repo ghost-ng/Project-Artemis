@@ -210,7 +210,7 @@ def send_data(conn, plain_text):
 
 def file_transfer_get(conn, file_name):      #push to server - response from a 'get'
     filesize = path.getsize(file_name)
-    conn.send(f"[file-size]{filesize}")
+    conn.send(f"[file-size]{filesize}".encode())
     try:
         f = open(file_name, 'rb')
         data = f.read(128)
