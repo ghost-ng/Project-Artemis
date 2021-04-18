@@ -320,6 +320,8 @@ def listen():
     global conn
     global CONNECTED_HOST
 
+    exit_flag = False
+
     options = """\
     1|get - Download a File
     2|put - Upload a File
@@ -394,7 +396,7 @@ def listen():
                     conn.close()
             else:
                 run_initial_survey(conn)
-            while True:
+            while exit_flag is False:
                 if run_tasks is True:
                     break
                 
@@ -475,7 +477,7 @@ def listen():
                     cmd = ""
                 elif cmd == "3": # If we got terminate command, inform the client and close the connect and break the loop
                     kill_session(conn, source)
-                    break
+                    exit_flag = True
                 elif cmd == "4":        #start beaconing
                     beacon.start_beaconing(conn)
                 elif cmd == "5":
