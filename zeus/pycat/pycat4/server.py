@@ -332,7 +332,7 @@ def listen():
 
     exit_flag = False
 
-    options = f"""{GREY}\
+    options = """\
     1|get - Download a File
     2|put - Upload a File
     3 - Kill Process (Do not beacon)
@@ -341,7 +341,7 @@ def listen():
     6 - Print uuid
     7 - Print Working Directory
     shell - Start a Shell
-    beacon - Change Beacon Settings{RSTCOLORS}"""
+    beacon - Change Beacon Settings"""
 
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     #context.verify_mode = ssl.CERT_REQUIRED
