@@ -320,7 +320,7 @@ def set_variables(cmd):
         CONFIG['VERBOSE'] = param
         print_good(f"New Verbose Value: {CONFIG['VERBOSE']}")
     if variable == "debug":
-        CONFIG['VERBOSE'] = param
+        CONFIG['DEBUG'] = param
         print_good(f"New Debug Value: {CONFIG['DEBUG']}")
 
 def print_config():
