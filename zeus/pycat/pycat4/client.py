@@ -280,6 +280,7 @@ def change_cwd(path):
 def beacon(conn, data):
     global BEACON_INTERVAL_SETTING
     global BEACON_INTERVAL_MEM
+    global RECONNECT_ATTEMPTS
     try:
         temp = data.strip("[BEACON]")
         if temp == "?":
@@ -293,6 +294,7 @@ def beacon(conn, data):
                 print_info("Received Beacon Instruction")
             conn.close()
             BEACON_INTERVAL_MEM = None
+            RECONNECT_ATTEMPTS = 0
             raise ConnectionResetError
     except Exception as e:
         if DEBUG:
