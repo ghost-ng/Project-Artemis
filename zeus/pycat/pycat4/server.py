@@ -339,6 +339,7 @@ def listen():
     context.load_verify_locations(cafile='client_certs')
     #delete_keys()
     bindsocket = socket.socket()
+    bindsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     bindsocket.bind((listen_addr, listen_port))
     bindsocket.listen(1)
     try:
