@@ -309,14 +309,18 @@ def set_variables(cmd):
     global CONFIG
     variable = cmd.split("=")[0]
     param = cmd.split("=")[1]
+    if param.lower() == "false":
+        param = False
+    elif param.lower() == "true":
+        param = True
     if variable == "timeout":
         CONFIG['TCP_TIMEOUT'] = float(param)
         print_good(f"New TCP Timeout Value: {CONFIG['TCP_TIMEOUT']}")
     if variable == "verbose":
-        CONFIG['VERBOSE'] = bool(param)
+        CONFIG['VERBOSE'] = param
         print_good(f"New Verbose Value: {CONFIG['VERBOSE']}")
     if variable == "debug":
-        CONFIG['VERBOSE'] = bool(param)
+        CONFIG['VERBOSE'] = param
         print_good(f"New Debug Value: {CONFIG['DEBUG']}")
 
 def print_config():
