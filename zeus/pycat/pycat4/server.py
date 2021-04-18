@@ -352,7 +352,7 @@ def listen():
             run_tasks = False
     except:
         run_tasks = False
-    while True:
+    while exit_flag is False:
         try:
             if run_tasks == True and VERBOSE is True:
                 print_info("Ready to Run a Task File")
