@@ -197,7 +197,7 @@ def listen_for_data(conn, mode="print",encoding="b64"):
         if mode != "print":
             return recv_total[:-5]
         else:
-            print(recv_total[:-5])
+            print(WHITE + recv_total[:-5] + RSTCOLORS)
     except socket.timeout:
         print(recv_total[:-5])
     except Exception as e:
@@ -328,7 +328,7 @@ def listen():
 
     exit_flag = False
 
-    options = f"""{WHITE}\
+    options = f"""{GREY}\
     1|get - Download a File
     2|put - Upload a File
     3 - Kill Process (Do not beacon)
