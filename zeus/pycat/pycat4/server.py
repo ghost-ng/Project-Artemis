@@ -20,7 +20,7 @@ DEBUG = True
 CURRENT_WORKING_DIR = ""
 TASK_FILES_LOCATION = "tasks"
 CONNECTED_HOST = None
-CONFIG = {"TCP_TIMEOUT": 3}
+CONFIG = {"TCP_TIMEOUT": 1}
 #IGNORE SSL CHECKS
 
 try:
@@ -135,17 +135,23 @@ def send_data(s, plain_text):
 
 def file_transfer_get(conn, filename):      #get file from server
     send_data(conn,"[transfer]")
-    filesize = conn.recv(128).decode()
-    print("total size:",filesize)
+    filesize = int(conn.recv(128).decode()[11:])
+    current_size = 0
+    print_info(f"Total Size: {filesize}")
     bytes_read = conn.recv(128)
     
     try:
+        print_info("Transferring...")
         with open(filename, "wb") as f:
             while bytes_read != b"[END]":
-                print_info("Transferring...")
+                ticker = round(100*current_size/filesize)
+                print(f"{ticker}%",end="\r")
                 f.write(bytes_read)
                 bytes_read = conn.recv(128)
+                current_size = os.path.getsize(filename)
+        print()
         if VERBOSE:
+            
             print_good("Transfer completed")
 
 
@@ -304,7 +310,7 @@ def set_variables(cmd):
     variable = cmd.split("=")[0]
     param = cmd.split("=")[1]
     if variable == "timeout":
-        CONFIG['TCP_TIMEOUT'] = int(param)
+        CONFIG['TCP_TIMEOUT'] = float(param)
         print_good(f"New TCP Timeout Value: {CONFIG['TCP_TIMEOUT']}")
 
 def print_config():
