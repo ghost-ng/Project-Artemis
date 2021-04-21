@@ -13,6 +13,8 @@ from datetime import datetime
 from getpass import getuser
 import argparse,base64
 
+#set working directory to script location
+chdir(path.dirname(os.path.realpath(__file__))
 
 #IGNORE SSL CHECKS
 
