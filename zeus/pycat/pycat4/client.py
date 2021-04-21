@@ -26,8 +26,8 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 
 UUID = "c60a59df-c3e1-11ea-a17a-bc14ef68ef25"   #python -c 'import uuid; print(uuid.uuid1())'
-remote_ip = '10.0.0.4'
-remote_port = 18082
+remote_ip = '127.0.0.1'
+remote_port = 8081
 server_sni_hostname = ''
 VERBOSE = True
 DEBUG = True
@@ -213,7 +213,7 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
     conn.send(f"[file-size]{filesize}".encode())
     try:
         f = open(file_name, 'rb')
-        data = f.read(128)
+        data = f.read(1024)
         f.close()
     except:
         if VERBOSE:
@@ -222,10 +222,10 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
         print_info("Sending File: " + file_name)
     try:
         with open(file_name, "rb") as f:
-            bytes_read = f.read(128)
+            bytes_read = f.read(1024)
             while bytes_read:
                 conn.sendall(bytes_read)
-                bytes_read = f.read(128)
+                bytes_read = f.read(1024)
         conn.send("[END]".encode('utf-8'))
         if VERBOSE:
             print_info("Done!")
@@ -242,7 +242,7 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
         if VERBOSE:
             print_info("Receiving --> {}".format(file_name))
         while True: 
-            data = conn.recv(128)
+            data = conn.recv(1024)
             if data.endswith(b"[END]"):
                 f.write(data.rstrip(b"[END]"))
                 if VERBOSE:
@@ -334,6 +334,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
     context.load_cert_chain(certfile='client_cert', keyfile='client_key')
     delete_keys()
     s = socket(AF_INET, SOCK_STREAM)
+    #s.setblocking(0)
     x = s.getsockopt( SOL_SOCKET, SO_KEEPALIVE)
     
     #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -368,7 +369,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                             print_fail("Lost Connection --> Count: {}".format(len(sock_desc_tracker)))
                         raise ConnectionResetError
                 sock_desc_tracker.append(int(conn.fileno()))
-                recv = conn.recv(128)
+                recv = conn.recv(1024)
                 recv_decoded = recv.decode('utf-8')
                 data = data + recv_decoded
                 if data:
@@ -403,7 +404,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     while not data.endswith('[END]'):
                         if DEBUG:
                             print("Waiting to Transfer...")
-                        data = conn.recv(128).decode('utf-8')
+                        data = conn.recv(1024).decode('utf-8')
                         if DEBUG:
                             print("DATA: {}".format(data))
                         
