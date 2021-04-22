@@ -78,7 +78,8 @@ H1fwfP6xGzn/UjUTNWuz
             file.write(server_cert)
     except:
         if VERBOSE:
-            print_fail("Unable to create ssl certs")
+            print_fail("Unable to create server key")
+            print(getcwd())
             print(exc_info())
 
     client_cert = '''\
@@ -108,7 +109,8 @@ z/BKKDg5xkjlf0TAyaAo
             file.write(client_cert)
     except:
         if VERBOSE:
-            print_fail("Unable to create ssl certs")
+            print_fail("Unable to create client cert")
+            print(getcwd())
             print(exc_info())
     client_key= '''\
 -----BEGIN PRIVATE KEY-----
@@ -144,7 +146,8 @@ TZdCKivQ2PsE9Uw8BwCZYJI=
             file.write(client_key)
     except:
         if VERBOSE:
-            print_fail("Unable to create ssl certs")
+            print_fail("Unable to create client key")
+            print(getcwd())
             print(exc_info())
 
 def push_uuid(conn):
