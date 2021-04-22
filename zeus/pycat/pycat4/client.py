@@ -13,9 +13,6 @@ from datetime import datetime
 from getpass import getuser
 import argparse,base64
 
-#set working directory to script location
-chdir(path.dirname(path.realpath(__file__)))
-
 #IGNORE SSL CHECKS
 
 try:
@@ -41,6 +38,12 @@ BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
 CURRENT_WORKING_DIR = getcwd()
 RECONNECT_ATTEMPTS = 5 #immediately upon disconnect
 
+if VERBOSE:
+    #set working directory to script location
+    print("Current Working Directory: ",getcwd())
+chdir(path.realpath(__file__))
+if VERBOSE:
+    print("New Working Directory: ",getcwd())
 try:
     if name  == "nt":
         winreg_exists = util.find_spec('winreg')
