@@ -41,7 +41,7 @@ RECONNECT_ATTEMPTS = 5 #immediately upon disconnect
 if VERBOSE:
     #set working directory to script location
     print("Current Working Directory: ",getcwd())
-chdir(path.realpath(__file__))
+chdir(path.dirname(sys.argv[0]))
 if VERBOSE:
     print("New Working Directory: ",getcwd())
 try:
