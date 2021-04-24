@@ -10,7 +10,6 @@ from sys import exit,exc_info,argv
 from signal import SIGTERM
 from random import randint, uniform, choice
 from datetime import datetime
-from getpass import getuser
 import argparse,base64
 
 #IGNORE SSL CHECKS
@@ -337,7 +336,7 @@ def get_cwd():
         if OUTPUT_FILE:
             log_line("PWD: {}".format(CURRENT_WORKING_DIR))
 def get_user():
-    username = getuser()
+    username = getlogin()
     return username
 
 def change_cwd(path):
