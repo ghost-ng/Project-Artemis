@@ -17,6 +17,7 @@ import tasker,base64
 
 VERBOSE = True
 DEBUG = True
+
 CURRENT_WORKING_DIR = ""
 TASK_FILES_LOCATION = "tasks"
 CONNECTED_HOST = None
