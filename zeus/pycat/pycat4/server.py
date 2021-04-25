@@ -274,9 +274,9 @@ def kill_session(conn, source):
     conn.close()
 
 def base64_decode(base64_message):
-    base64_bytes = base64_message.encode('ascii')
+    base64_bytes = base64_message.encode('utf8')
     message_bytes = base64.b64decode(base64_bytes)
-    message = message_bytes.decode('ascii')
+    message = message_bytes.decode('utf8')
     return message
 
 def query_for_tasklist(machine_addr):
