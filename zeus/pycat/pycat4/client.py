@@ -40,6 +40,8 @@ BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
 CURRENT_WORKING_DIR = getcwd()
 RECONNECT_ATTEMPTS = 5 #immediately upon disconnect
 
+system('chcp 65001')
+
 try:
     if name  == "nt":
         winreg_exists = util.find_spec('winreg')
@@ -677,8 +679,7 @@ def main():
         print(log)
         if OUTPUT_FILE:
             log_line(log)
-    system('chcp 65001 2> nul')
-
+    
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('-p', action='store', dest='remote_port',
                             help='Remote Port',default=remote_port)
