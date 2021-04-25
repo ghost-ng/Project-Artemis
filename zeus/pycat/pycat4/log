@@ -1,0 +1,41 @@
+20:30:03 Lost Connection --> Count: 30
+20:30:03 Error on Line:487
+20:30:03 Unable to Delete SSL Keys
+20:30:03 Unable to Delete SSL Keys
+20:30:03 Current Beacon Setting is: 30 seconds
+20:30:03 New Beacon Value is: 29 seconds
+20:30:03 REMOTE_HOST: localhost:8081
+20:30:03 Reconnecting...
+20:30:03 Remaining Reconnect Attempts Before Drift: 4
+20:30:03 Trying to connect --> localhost:8081
+20:30:05 Connected!
+20:30:05 SSL established. Peer: {'subject': ((('countryName', 'AU'),), (('stateOrProvinceName', 'Some-State'),), (('organizationName', 'Internet Widgits Pty Ltd'),)), 'issuer': ((('countryName', 'AU'),), (('stateOrProvinceName', 'Some-State'),), (('organizationName', 'Internet Widgits Pty Ltd'),)), 'version': 3, 'serialNumber': '3FA0EF86E16CD938E605B6F55B017A66882FD5EF', 'notBefore': 'Feb 28 05:59:39 2020 GMT', 'notAfter': 'Feb 25 05:59:39 2030 GMT'}
+20:30:05 PWD: C:\Users\miguel\Documents\Github\Project-Artemis\zeus\pycat\pycat4
+20:30:05 Received:
+[pwd]
+20:30:05 Sending: QzpcVXNlcnNcbWlndWVsXERvY3VtZW50c1xHaXRodWJcUHJvamVjdC1BcnRlbWlzXHpldXNccHljYXRccHljYXQ0W0VORF0=
+20:30:05 Sent:
+C:\Users\miguel\Documents\Github\Project-Artemis\zeus\pycat\pycat4
+20:30:05 Received:
+[UUID]
+20:30:05 Sending: YzYwYTU5ZGYtYzNlMS0xMWVhLWExN2EtYmMxNGVmNjhlZjI1W0VORF0=
+20:30:05 Sent:
+c60a59df-c3e1-11ea-a17a-bc14ef68ef25
+20:30:05 Received:
+[time]
+20:30:05 Sending: MjA6MzA6MDVbRU5EXQ==
+20:30:05 Sent:
+20:30:05
+20:30:05 Received:
+[pwd]
+20:30:05 Sending: QzpcVXNlcnNcbWlndWVsXERvY3VtZW50c1xHaXRodWJcUHJvamVjdC1BcnRlbWlzXHpldXNccHljYXRccHljYXQ0W0VORF0=
+20:30:05 Sent:
+C:\Users\miguel\Documents\Github\Project-Artemis\zeus\pycat\pycat4
+20:30:05 Received:
+[user]
+20:30:05 Sending: bWlndWVsW0VORF0=
+20:30:05 Sent:
+miguel
+20:30:09 Received:
+[kill]
+20:30:09 Received kill command

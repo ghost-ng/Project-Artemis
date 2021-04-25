@@ -35,7 +35,7 @@ else:
 
 
 listen_addr = '0.0.0.0'
-listen_port = 8081
+listen_port = 18082
 conn = ""
 ###NEED TO WRITE EACH FILE ON EXECUTE THEN DELETE ON EXIT
 
@@ -510,18 +510,29 @@ def listen():
                     exit(1)
                 elif cmd == "get" or cmd == "1":
                     print("<source> <dest>")
-                    filename_cmd = input("get > ")
+                    filename_cmd = input("get> ")
                     if filename_cmd != "back":
                         transfer = False
                         path_exists = True
                         dest_filename = ""
                         filename_array = shlex.split(filename_cmd)
-                        if len(filename_array) == 1:
+
+                        if '"' in filename_cmd:
+                            dest_filename = filename_cmd.split('"')[1]
+                            src_filename = dest_filename
+                            transfer = True
+                        elif "'" in filename_cmd:
+                            dest_filename = filename_cmd.split('"')[1]
+                            src_filename = dest_filename
+                            transfer = True
+                        
+                        elif len(filename_array) == 1:
                             dest_filename = filename_array[0]
                             src_filename = filename_array[0]
                             
                             transfer = True
-                        elif len(filename_array)== 2:
+                        elif len(filename_array) == 2:
+
                             if path.dirname(filename_array[1]) != "":
                                 path_exists = path.exists(path.dirname(filename_array[1]))
                                 transfer = True
