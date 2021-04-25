@@ -240,12 +240,14 @@ def send_data(conn, plain_text):
         plain_text = str(plain_text)
     msg = plain_text
     try:
-        base64_msg = base64_encode(msg + "[END]")
+        #base64_msg = base64_encode(msg + "[END]")
+        base64_msg = plain_text + "[END]"
         if DEBUG:
             print("Sending:",base64_msg)
             if OUTPUT_FILE:
                 log_line("Sending: {}".format(base64_msg))
         conn.send(base64_msg.encode('utf-8'))
+
         if VERBOSE:
             print_info("Sent:\n"  +plain_text)
             if OUTPUT_FILE:
