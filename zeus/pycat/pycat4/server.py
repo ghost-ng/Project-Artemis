@@ -240,22 +240,29 @@ def listen_for_data(conn, mode="print",encoding="b641"):
             print_info("Waiting for data...")
 
         recv_total = ""
-        recv_data = conn.recv(128).decode('utf-8')
-        if encoding == "b64":
-            recv_total = base64_decode(recv_data)
-        else:
-            recv_total = recv_data
+        #recv_data = conn.recv(128).decode('utf-8')
+        #if encoding == "b64":
+        #    recv_total = base64_decode(recv_data)
+        #else:
+        #    recv_total = recv_data
+        count = 0
         while '[END]' not in recv_total:
+            #print(f"Buffer Round #{count+1}")
+            #count += 1
             #print(f"Received: {recv_total}\n-----------------")              
-            if encoding == "b64":
-                recv_total = recv_total + base64_decode(recv_data)
-            else:
-                recv_total = recv_total + recv_data
+            #if encoding == "b64":
+            #    recv_total = recv_total + base64_decode(recv_data)
+            #else:
+            #    recv_total = recv_total + recv_data
+            #recv_data = conn.recv(128).decode('utf-8')
             recv_data = conn.recv(128).decode('utf-8')
+            recv_total = recv_total + recv_data
+
         if mode != "print":
             return recv_total[:-5]
         else:
             print(WHITE + recv_total[:-5] + RSTCOLORS)
+
     except socket.timeout:
         print("TIMEOUT")
         if mode != "print":
